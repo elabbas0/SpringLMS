@@ -2,6 +2,7 @@ package com.springlms.backend.model.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDate;
 
 @Entity
 @Getter
@@ -21,7 +22,11 @@ public class StudentProfile {
 
     private Double attendancePercentage;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
+    private LocalDate birth;
+
+    private String phone;
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 }
