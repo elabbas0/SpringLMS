@@ -18,29 +18,30 @@ public class TeacherProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String employeeNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String lastName;
 
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String phoneNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String address;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "faculty_id")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "faculty_id", nullable = false)
     private Faculty faculty;
 
-    private Integer hoursTaught;
+    @Builder.Default
+    private Integer hoursTaught = 0;
 
     @OneToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)

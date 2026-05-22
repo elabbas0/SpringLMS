@@ -19,28 +19,31 @@ public class StudentProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 50)
     private String studentNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String firstName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String lastName;
 
     @Column(nullable = false)
     private LocalDate dateOfBirth;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private String phoneNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String address;
 
+    @Column(length = 150)
     private String emergencyContactName;
 
+    @Column(length = 30)
     private String emergencyContactPhone;
 
+    @Column(length = 100)
     private String emergencyContactRelation;
 
     @ManyToOne(fetch = FetchType.LAZY)

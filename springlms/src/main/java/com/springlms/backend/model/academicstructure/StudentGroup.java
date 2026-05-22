@@ -29,12 +29,13 @@ public class StudentGroup {
     private EducationLevel educationLevel;
 
     @Column(nullable = false)
-    private Integer studyYear; //bachelor or master
+    private Integer studyYear;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "faculty_id", nullable = false)
     private Faculty faculty;
 
+    @Builder.Default
     @Column(nullable = false)
-    private Boolean archived;
+    private Boolean archived = false;
 }
