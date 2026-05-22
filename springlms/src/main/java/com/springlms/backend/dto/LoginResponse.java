@@ -8,6 +8,7 @@ public record LoginResponse(
         String email,
         Role role,
         State state,
-        String message
+        String token,
+        String tokenType
 ) {
 }

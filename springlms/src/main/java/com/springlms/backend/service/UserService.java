@@ -14,6 +14,7 @@ import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
 import com.springlms.backend.repository.FacultyRepository;
 import com.springlms.backend.repository.UserRepository;
+import com.springlms.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final FacultyRepository facultyRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public UserResponse registerStudent(StudentRegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -65,12 +67,19 @@ public class UserService {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
+        if (user.getState() != State.ACTIVE) {
+            throw new IllegalArgumentException("Account is not active.");
+        }
+
+        String token = jwtService.generateToken(user);
+
         return new LoginResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getRole(),
                 user.getState(),
-                "Login successful. JWT will be added later."
+                token,
+                "Bearer"
         );
     }
 
