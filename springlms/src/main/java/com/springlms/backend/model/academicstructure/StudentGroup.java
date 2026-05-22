@@ -24,6 +24,13 @@ public class StudentGroup {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EducationLevel educationLevel;
+
+    @Column(nullable = false)
+    private Integer studyYear; //bachelor or master
+
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "faculty_id", nullable = false)
     private Faculty faculty;

@@ -1,12 +1,21 @@
 package com.springlms.backend.service;
 
+import com.springlms.backend.dto.AdminDashboardResponse;
+import com.springlms.backend.dto.CreateTeacherRequest;
+import com.springlms.backend.dto.LoginRequest;
+import com.springlms.backend.dto.LoginResponse;
+import com.springlms.backend.dto.StudentRegisterRequest;
+import com.springlms.backend.dto.UserResponse;
+import com.springlms.backend.model.academicstructure.Faculty;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.State;
 import com.springlms.backend.model.user.StudentProfile;
 import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
+import com.springlms.backend.repository.FacultyRepository;
 import com.springlms.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,6 +23,114 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FacultyRepository facultyRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserResponse registerStudent(StudentRegisterRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Email is already registered.");
+        }
+
+        User user = User.builder()
+                .email(request.email())
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .role(Role.STUDENT)
+                .state(State.PENDING_APPROVAL)
+                .build();
+
+        StudentProfile studentProfile = StudentProfile.builder()
+                .studentNumber(request.studentNumber())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .dateOfBirth(request.dateOfBirth())
+                .phoneNumber(request.phoneNumber())
+                .address(request.address())
+                .emergencyContactName(request.emergencyContactName())
+                .emergencyContactPhone(request.emergencyContactPhone())
+                .emergencyContactRelation(request.emergencyContactRelation())
+                .build();
+
+        user.setStudentProfile(studentProfile);
+
+        User savedUser = registerUser(user);
+
+        return toUserResponse(savedUser);
+    }
+
+    public LoginResponse login(LoginRequest request) {
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid email or password.");
+        }
+
+        return new LoginResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                user.getState(),
+                "Login successful. JWT will be added later."
+        );
+    }
+
+    public UserResponse createTeacher(CreateTeacherRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("Email is already registered.");
+        }
+
+        Faculty faculty = facultyRepository.findById(request.facultyId())
+                .orElseThrow(() -> new IllegalArgumentException("Faculty not found."));
+
+        User user = User.builder()
+                .email(request.email())
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .role(Role.TEACHER)
+                .state(State.ACTIVE)
+                .build();
+
+        TeacherProfile teacherProfile = TeacherProfile.builder()
+                .employeeNumber(request.employeeNumber())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .dateOfBirth(request.dateOfBirth())
+                .phoneNumber(request.phoneNumber())
+                .address(request.address())
+                .faculty(faculty)
+                .hoursTaught(request.hoursTaught() == null ? 0 : request.hoursTaught())
+                .build();
+
+        user.setTeacherProfile(teacherProfile);
+
+        validateUserProfileByRole(user);
+
+        if (user.getTeacherProfile() != null) {
+            user.getTeacherProfile().setUser(user);
+        }
+
+        User savedUser = userRepository.save(user);
+
+        return toUserResponse(savedUser);
+    }
+
+    public AdminDashboardResponse getAdminDashboard() {
+        long totalUsers = userRepository.count();
+        long totalStudents = userRepository.findByRole(Role.STUDENT).size();
+        long totalTeachers = userRepository.findByRole(Role.TEACHER).size();
+        long totalAdmins = userRepository.findByRole(Role.ADMIN).size();
+        long pendingUsers = userRepository.findAll()
+                .stream()
+                .filter(user -> user.getState() == State.PENDING_APPROVAL)
+                .count();
+
+        return new AdminDashboardResponse(
+                totalUsers,
+                totalStudents,
+                totalTeachers,
+                totalAdmins,
+                pendingUsers
+        );
+    }
 
     public User registerUser(User user) {
         validateForRegistration(user);
@@ -199,5 +316,14 @@ public class UserService {
         if (profile.getFaculty() == null) {
             throw new IllegalArgumentException("Teacher faculty is required.");
         }
+    }
+
+    private UserResponse toUserResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                user.getState()
+        );
     }
 }

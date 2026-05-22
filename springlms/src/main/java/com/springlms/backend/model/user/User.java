@@ -30,6 +30,7 @@ public class User {
     @Column(nullable = false)
     private State state;
 
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private StudentProfile studentProfile;
 
