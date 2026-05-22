@@ -1,5 +1,6 @@
 package com.springlms.backend.model.user;
 
+import com.springlms.backend.model.academicstructure.Faculty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,7 +36,9 @@ public class TeacherProfile {
     @Column(nullable = false)
     private String address;
 
-    private String faculty;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "faculty_id")
+    private Faculty faculty;
 
     private Integer hoursTaught;
 

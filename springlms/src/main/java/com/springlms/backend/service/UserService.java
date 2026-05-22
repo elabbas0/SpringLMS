@@ -18,7 +18,7 @@ public class UserService {
     public User registerUser(User user) {
         validateForRegistration(user);
 
-        user.setState(State.PENDING_APPROVAL); // default
+        user.setState(State.PENDING_APPROVAL);
 
         if (user.getStudentProfile() != null) {
             user.getStudentProfile().setUser(user);
@@ -32,7 +32,8 @@ public class UserService {
     }
 
     public User approveUser(User user) {
-        validateUserProfileByRole(user); // check user type
+        validateUserProfileByRole(user);
+
         user.setState(State.ACTIVE);
 
         if (user.getStudentProfile() != null) {
@@ -152,6 +153,22 @@ public class UserService {
         if (profile.getAddress() == null || profile.getAddress().isBlank()) {
             throw new IllegalArgumentException("Student address is required.");
         }
+
+        if (profile.getFaculty() == null) {
+            throw new IllegalArgumentException("Student faculty is required.");
+        }
+
+        if (profile.getGroup() == null) {
+            throw new IllegalArgumentException("Student group is required.");
+        }
+
+        if (profile.getGroup().getFaculty() == null) {
+            throw new IllegalArgumentException("Student group must belong to a faculty.");
+        }
+
+        if (!profile.getGroup().getFaculty().getId().equals(profile.getFaculty().getId())) {
+            throw new IllegalArgumentException("Student group must belong to the selected faculty.");
+        }
     }
 
     private void validateTeacherProfile(TeacherProfile profile) {
@@ -177,6 +194,10 @@ public class UserService {
 
         if (profile.getAddress() == null || profile.getAddress().isBlank()) {
             throw new IllegalArgumentException("Teacher address is required.");
+        }
+
+        if (profile.getFaculty() == null) {
+            throw new IllegalArgumentException("Teacher faculty is required.");
         }
     }
 }

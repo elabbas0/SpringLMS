@@ -1,5 +1,7 @@
 package com.springlms.backend.model.user;
 
+import com.springlms.backend.model.academicstructure.Faculty;
+import com.springlms.backend.model.academicstructure.StudentGroup;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -35,22 +37,19 @@ public class StudentProfile {
     @Column(nullable = false)
     private String address;
 
-    @Column(nullable = true)
     private String emergencyContactName;
 
-    @Column(nullable = true)
     private String emergencyContactPhone;
 
-    @Column(nullable = true)
-    private String emergencyContactRelation; // these 3 can be null, not really required
+    private String emergencyContactRelation;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "faculty_id")
-//    private Faculty faculty;
-//
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "group_id")
-//    private StudentGroup group;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "faculty_id")
+    private Faculty faculty;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private StudentGroup group;
 
     @OneToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
