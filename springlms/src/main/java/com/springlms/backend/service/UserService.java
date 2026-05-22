@@ -2,6 +2,8 @@ package com.springlms.backend.service;
 
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.State;
+import com.springlms.backend.model.user.StudentProfile;
+import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
 import com.springlms.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -61,10 +63,6 @@ public class UserService {
     }
 
     private void validateForRegistration(User user) {
-        if (user.getFullName() == null || user.getFullName().isBlank()) {
-            throw new IllegalArgumentException("Full name is required.");
-        }
-
         if (user.getEmail() == null || user.getEmail().isBlank()) {
             throw new IllegalArgumentException("Email is required.");
         }
@@ -78,7 +76,7 @@ public class UserService {
         }
 
         if (user.getRole() == null) {
-            throw new IllegalArgumentException("User type is required.");
+            throw new IllegalArgumentException("User role is required.");
         }
 
         if (user.getRole() == Role.ADMIN) {
@@ -113,6 +111,8 @@ public class UserService {
             if (user.getTeacherProfile() != null) {
                 throw new IllegalArgumentException("Student users cannot have a teacher profile.");
             }
+
+            validateStudentProfile(user.getStudentProfile());
         }
 
         if (user.getRole() == Role.TEACHER) {
@@ -123,6 +123,60 @@ public class UserService {
             if (user.getStudentProfile() != null) {
                 throw new IllegalArgumentException("Teacher users cannot have a student profile.");
             }
+
+            validateTeacherProfile(user.getTeacherProfile());
+        }
+    }
+
+    private void validateStudentProfile(StudentProfile profile) {
+        if (profile.getStudentNumber() == null || profile.getStudentNumber().isBlank()) {
+            throw new IllegalArgumentException("Student number is required.");
+        }
+
+        if (profile.getFirstName() == null || profile.getFirstName().isBlank()) {
+            throw new IllegalArgumentException("Student first name is required.");
+        }
+
+        if (profile.getLastName() == null || profile.getLastName().isBlank()) {
+            throw new IllegalArgumentException("Student last name is required.");
+        }
+
+        if (profile.getDateOfBirth() == null) {
+            throw new IllegalArgumentException("Student date of birth is required.");
+        }
+
+        if (profile.getPhoneNumber() == null || profile.getPhoneNumber().isBlank()) {
+            throw new IllegalArgumentException("Student phone number is required.");
+        }
+
+        if (profile.getAddress() == null || profile.getAddress().isBlank()) {
+            throw new IllegalArgumentException("Student address is required.");
+        }
+    }
+
+    private void validateTeacherProfile(TeacherProfile profile) {
+        if (profile.getEmployeeNumber() == null || profile.getEmployeeNumber().isBlank()) {
+            throw new IllegalArgumentException("Employee number is required.");
+        }
+
+        if (profile.getFirstName() == null || profile.getFirstName().isBlank()) {
+            throw new IllegalArgumentException("Teacher first name is required.");
+        }
+
+        if (profile.getLastName() == null || profile.getLastName().isBlank()) {
+            throw new IllegalArgumentException("Teacher last name is required.");
+        }
+
+        if (profile.getDateOfBirth() == null) {
+            throw new IllegalArgumentException("Teacher date of birth is required.");
+        }
+
+        if (profile.getPhoneNumber() == null || profile.getPhoneNumber().isBlank()) {
+            throw new IllegalArgumentException("Teacher phone number is required.");
+        }
+
+        if (profile.getAddress() == null || profile.getAddress().isBlank()) {
+            throw new IllegalArgumentException("Teacher address is required.");
         }
     }
 }

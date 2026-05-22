@@ -2,6 +2,7 @@ package com.springlms.backend.model.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 
 @Entity
@@ -16,15 +17,40 @@ public class StudentProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String faculty;
+    @Column(nullable = false, unique = true)
+    private String studentNumber;
 
-    private Double gpa;
+    @Column(nullable = false)
+    private String firstName;
 
-    private Double attendancePercentage;
+    @Column(nullable = false)
+    private String lastName;
 
-    private LocalDate birth;
+    @Column(nullable = false)
+    private LocalDate dateOfBirth;
 
-    private String phone;
+    @Column(nullable = false)
+    private String phoneNumber;
+
+    @Column(nullable = false)
+    private String address;
+
+    @Column(nullable = true)
+    private String emergencyContactName;
+
+    @Column(nullable = true)
+    private String emergencyContactPhone;
+
+    @Column(nullable = true)
+    private String emergencyContactRelation; // these 3 can be null, not really required
+
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "faculty_id")
+//    private Faculty faculty;
+//
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "group_id")
+//    private StudentGroup group;
 
     @OneToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
