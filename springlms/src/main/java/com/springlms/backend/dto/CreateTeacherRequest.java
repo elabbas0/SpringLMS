@@ -5,7 +5,8 @@ import java.time.LocalDate;
 public record CreateTeacherRequest(
         String email,
         String password,
-        String employeeNumber,
+        String finCode,
+        String serialNumber,
         String firstName,
         String lastName,
         LocalDate dateOfBirth,

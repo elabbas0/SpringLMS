@@ -5,6 +5,12 @@ public record AdminDashboardResponse(
         long totalStudents,
         long totalTeachers,
         long totalAdmins,
-        long pendingUsers
+        long pendingUsers,
+        long activeUsers,
+        long inactiveUsers,
+        long suspendedUsers,
+        long academicLeaveUsers,
+        long graduatedUsers,
+        long dismissedUsers
 ) {
 }

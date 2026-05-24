@@ -1,7 +1,10 @@
 package com.springlms.backend.service;
 
 import com.springlms.backend.dto.AdminDashboardResponse;
+import com.springlms.backend.dto.ChangeUserStateRequest;
+import com.springlms.backend.dto.CreateFacultyRequest;
 import com.springlms.backend.dto.CreateTeacherRequest;
+import com.springlms.backend.dto.FacultyResponse;
 import com.springlms.backend.dto.LoginRequest;
 import com.springlms.backend.dto.LoginResponse;
 import com.springlms.backend.dto.StudentRegisterRequest;
@@ -15,13 +18,23 @@ import com.springlms.backend.model.user.User;
 import com.springlms.backend.repository.FacultyRepository;
 import com.springlms.backend.repository.UserRepository;
 import com.springlms.backend.security.JwtService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+    private static final Pattern FIN_CODE_PATTERN = Pattern.compile("^[A-Z0-9]{7}$");
+    private static final Pattern SERIAL_NUMBER_PATTERN = Pattern.compile("^[A-Z]{2,4}[0-9]{6,10}$");
 
     private final UserRepository userRepository;
     private final FacultyRepository facultyRepository;
@@ -41,7 +54,8 @@ public class UserService {
                 .build();
 
         StudentProfile studentProfile = StudentProfile.builder()
-                .studentNumber(request.studentNumber())
+                .finCode(normalizeIdentityValue(request.finCode()))
+                .serialNumber(normalizeIdentityValue(request.serialNumber()))
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .dateOfBirth(request.dateOfBirth())
@@ -67,8 +81,12 @@ public class UserService {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
+        if (user.getState() == State.PENDING_APPROVAL) {
+            throw new IllegalArgumentException("Your account is pending admin approval.");
+        }
+
         if (user.getState() != State.ACTIVE) {
-            throw new IllegalArgumentException("Account is not active.");
+            throw new IllegalArgumentException("Your account is not active.");
         }
 
         String token = jwtService.generateToken(user);
@@ -88,6 +106,10 @@ public class UserService {
             throw new IllegalArgumentException("Email is already registered.");
         }
 
+        if (request.facultyId() == null) {
+            throw new IllegalArgumentException("Teacher faculty is required.");
+        }
+
         Faculty faculty = facultyRepository.findById(request.facultyId())
                 .orElseThrow(() -> new IllegalArgumentException("Faculty not found."));
 
@@ -99,7 +121,8 @@ public class UserService {
                 .build();
 
         TeacherProfile teacherProfile = TeacherProfile.builder()
-                .employeeNumber(request.employeeNumber())
+                .finCode(normalizeIdentityValue(request.finCode()))
+                .serialNumber(normalizeIdentityValue(request.serialNumber()))
                 .firstName(request.firstName())
                 .lastName(request.lastName())
                 .dateOfBirth(request.dateOfBirth())
@@ -122,23 +145,119 @@ public class UserService {
         return toUserResponse(savedUser);
     }
 
+    public List<FacultyResponse> listFaculties() {
+        return facultyRepository.findAllByOrderByNameAsc()
+                .stream()
+                .map(this::toFacultyResponse)
+                .toList();
+    }
+
+    public FacultyResponse createFaculty(CreateFacultyRequest request) {
+        String facultyName = normalizeText(request.name());
+        String facultyCode = normalizeIdentityValue(request.code());
+
+        if (facultyName == null || facultyName.isBlank()) {
+            throw new IllegalArgumentException("Faculty name is required.");
+        }
+
+        if (facultyCode == null || facultyCode.isBlank()) {
+            throw new IllegalArgumentException("Faculty code is required.");
+        }
+
+        if (facultyRepository.existsByNameIgnoreCase(facultyName)) {
+            throw new IllegalArgumentException("Faculty name already exists.");
+        }
+
+        if (facultyRepository.existsByCode(facultyCode)) {
+            throw new IllegalArgumentException("Faculty code already exists.");
+        }
+
+        Faculty faculty = Faculty.builder()
+                .name(facultyName)
+                .code(facultyCode)
+                .archived(false)
+                .build();
+
+        Faculty savedFaculty = facultyRepository.save(faculty);
+
+        return toFacultyResponse(savedFaculty);
+    }
+
     public AdminDashboardResponse getAdminDashboard() {
         long totalUsers = userRepository.count();
-        long totalStudents = userRepository.findByRole(Role.STUDENT).size();
-        long totalTeachers = userRepository.findByRole(Role.TEACHER).size();
-        long totalAdmins = userRepository.findByRole(Role.ADMIN).size();
-        long pendingUsers = userRepository.findAll()
-                .stream()
-                .filter(user -> user.getState() == State.PENDING_APPROVAL)
-                .count();
+        long totalStudents = userRepository.countByRole(Role.STUDENT);
+        long totalTeachers = userRepository.countByRole(Role.TEACHER);
+        long totalAdmins = userRepository.countByRole(Role.ADMIN);
+        long pendingUsers = userRepository.countByState(State.PENDING_APPROVAL);
+        long activeUsers = userRepository.countByState(State.ACTIVE);
+        long inactiveUsers = userRepository.countByState(State.INACTIVE);
+        long suspendedUsers = userRepository.countByState(State.SUSPENDED);
+        long academicLeaveUsers = userRepository.countByState(State.ACADEMIC_LEAVE);
+        long graduatedUsers = userRepository.countByState(State.GRADUATED);
+        long dismissedUsers = userRepository.countByState(State.DISMISSED);
 
         return new AdminDashboardResponse(
                 totalUsers,
                 totalStudents,
                 totalTeachers,
                 totalAdmins,
-                pendingUsers
+                pendingUsers,
+                activeUsers,
+                inactiveUsers,
+                suspendedUsers,
+                academicLeaveUsers,
+                graduatedUsers,
+                dismissedUsers
         );
+    }
+
+    public List<UserResponse> searchUsers(String query, Role role, State state) {
+        Specification<User> specification = (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (query != null && !query.isBlank()) {
+                String searchPattern = "%" + query.trim().toLowerCase() + "%";
+
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("email")),
+                        searchPattern
+                ));
+            }
+
+            if (role != null) {
+                predicates.add(criteriaBuilder.equal(root.get("role"), role));
+            }
+
+            if (state != null) {
+                predicates.add(criteriaBuilder.equal(root.get("state"), state));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return userRepository.findAll(specification)
+                .stream()
+                .map(this::toUserResponse)
+                .toList();
+    }
+
+    public UserResponse changeUserState(Long userId, ChangeUserStateRequest request) {
+        if (request.state() == null) {
+            throw new IllegalArgumentException("User state is required.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
+
+        if (request.state() == State.ACTIVE) {
+            validateUserProfileByRole(user);
+        }
+
+        user.setState(request.state());
+
+        User savedUser = userRepository.save(user);
+
+        return toUserResponse(savedUser);
     }
 
     public User registerUser(User user) {
@@ -256,8 +375,20 @@ public class UserService {
     }
 
     private void validateStudentProfile(StudentProfile profile) {
-        if (profile.getStudentNumber() == null || profile.getStudentNumber().isBlank()) {
-            throw new IllegalArgumentException("Student number is required.");
+        if (profile.getFinCode() == null || profile.getFinCode().isBlank()) {
+            throw new IllegalArgumentException("FIN code is required.");
+        }
+
+        if (!FIN_CODE_PATTERN.matcher(profile.getFinCode()).matches()) {
+            throw new IllegalArgumentException("FIN code must be 7 uppercase letters or digits.");
+        }
+
+        if (profile.getSerialNumber() == null || profile.getSerialNumber().isBlank()) {
+            throw new IllegalArgumentException("Serial number is required.");
+        }
+
+        if (!SERIAL_NUMBER_PATTERN.matcher(profile.getSerialNumber()).matches()) {
+            throw new IllegalArgumentException("Serial number must start with letters and end with digits.");
         }
 
         if (profile.getFirstName() == null || profile.getFirstName().isBlank()) {
@@ -272,34 +403,40 @@ public class UserService {
             throw new IllegalArgumentException("Student date of birth is required.");
         }
 
-        if (profile.getPhoneNumber() == null || profile.getPhoneNumber().isBlank()) {
-            throw new IllegalArgumentException("Student phone number is required.");
-        }
+        if (profile.getFaculty() != null || profile.getGroup() != null) {
+            if (profile.getFaculty() == null) {
+                throw new IllegalArgumentException("Student faculty is required when a group is assigned.");
+            }
 
-        if (profile.getAddress() == null || profile.getAddress().isBlank()) {
-            throw new IllegalArgumentException("Student address is required.");
-        }
+            if (profile.getGroup() == null) {
+                throw new IllegalArgumentException("Student group is required when a faculty is assigned.");
+            }
 
-        if (profile.getFaculty() == null) {
-            throw new IllegalArgumentException("Student faculty is required.");
-        }
+            if (profile.getGroup().getFaculty() == null) {
+                throw new IllegalArgumentException("Student group must belong to a faculty.");
+            }
 
-        if (profile.getGroup() == null) {
-            throw new IllegalArgumentException("Student group is required.");
-        }
-
-        if (profile.getGroup().getFaculty() == null) {
-            throw new IllegalArgumentException("Student group must belong to a faculty.");
-        }
-
-        if (!profile.getGroup().getFaculty().getId().equals(profile.getFaculty().getId())) {
-            throw new IllegalArgumentException("Student group must belong to the selected faculty.");
+            if (!profile.getGroup().getFaculty().getId().equals(profile.getFaculty().getId())) {
+                throw new IllegalArgumentException("Student group must belong to the selected faculty.");
+            }
         }
     }
 
     private void validateTeacherProfile(TeacherProfile profile) {
-        if (profile.getEmployeeNumber() == null || profile.getEmployeeNumber().isBlank()) {
-            throw new IllegalArgumentException("Employee number is required.");
+        if (profile.getFinCode() == null || profile.getFinCode().isBlank()) {
+            throw new IllegalArgumentException("Teacher FIN code is required.");
+        }
+
+        if (!FIN_CODE_PATTERN.matcher(profile.getFinCode()).matches()) {
+            throw new IllegalArgumentException("Teacher FIN code must be 7 uppercase letters or digits.");
+        }
+
+        if (profile.getSerialNumber() == null || profile.getSerialNumber().isBlank()) {
+            throw new IllegalArgumentException("Teacher serial number is required.");
+        }
+
+        if (!SERIAL_NUMBER_PATTERN.matcher(profile.getSerialNumber()).matches()) {
+            throw new IllegalArgumentException("Teacher serial number must start with letters and end with digits.");
         }
 
         if (profile.getFirstName() == null || profile.getFirstName().isBlank()) {
@@ -334,5 +471,33 @@ public class UserService {
                 user.getRole(),
                 user.getState()
         );
+    }
+
+    private FacultyResponse toFacultyResponse(Faculty faculty) {
+        return new FacultyResponse(
+                faculty.getId(),
+                faculty.getName(),
+                faculty.getCode(),
+                faculty.getArchived()
+        );
+    }
+
+    private String normalizeIdentityValue(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value
+                .trim()
+                .replace(" ", "")
+                .toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeText(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return value.trim();
     }
 }

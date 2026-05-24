@@ -5,7 +5,8 @@ import java.time.LocalDate;
 public record StudentRegisterRequest(
         String email,
         String password,
-        String studentNumber,
+        String finCode,
+        String serialNumber,
         String firstName,
         String lastName,
         LocalDate dateOfBirth,

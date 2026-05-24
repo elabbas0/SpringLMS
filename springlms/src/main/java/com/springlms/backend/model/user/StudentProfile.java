@@ -19,8 +19,11 @@ public class StudentProfile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String studentNumber;
+    @Column(nullable = false, unique = true, length = 7)
+    private String finCode;
+
+    @Column(nullable = false, unique = true, length = 20)
+    private String serialNumber;
 
     @Column(nullable = false, length = 100)
     private String firstName;
