@@ -63,12 +63,16 @@ export default function CreateFacultyPage() {
         <div>
           <span className="eyebrow">Admin</span>
           <h1>Create Faculty</h1>
-          <p>Create faculties like ITT before assigning teachers and groups.</p>
         </div>
 
-        <Link className="secondaryButton smallButton" to="/admin/teachers/create">
-          Create Teacher
-        </Link>
+        <div className="buttonRow compactRow">
+          <Link className="secondaryButton smallButton" to="/admin/specializations/create">
+            Create Specialization
+          </Link>
+          <Link className="secondaryButton smallButton" to="/admin/teachers/create">
+            Create Teacher
+          </Link>
+        </div>
       </div>
 
       {error && <div className="errorBox">{error}</div>}
@@ -108,7 +112,6 @@ export default function CreateFacultyPage() {
         <div className="sectionHeader">
           <span className="eyebrow">Available Faculties</span>
           <h2>Current faculty list</h2>
-          <p>These options will appear in the teacher creation dropdown.</p>
         </div>
 
         {listLoading ? (

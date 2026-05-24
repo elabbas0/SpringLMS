@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  changeStudentGroupApproval,
   changeUserState,
   getAdminDashboard,
+  listStudentGroups,
   searchUsers
 } from "../api/adminApi.js";
 
@@ -45,6 +47,7 @@ function formatEnum(value) {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [studentGroups, setStudentGroups] = useState([]);
 
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("");
@@ -53,6 +56,7 @@ export default function AdminDashboardPage() {
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
   const [stateUpdatingUserId, setStateUpdatingUserId] = useState(null);
+  const [groupApprovalUpdatingId, setGroupApprovalUpdatingId] = useState(null);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -90,15 +94,17 @@ export default function AdminDashboardPage() {
 
     async function loadInitialData() {
       try {
-        const [dashboardResult, usersResult] = await Promise.all([
+        const [dashboardResult, usersResult, studentGroupsResult] = await Promise.all([
           getAdminDashboard(),
-          searchUsers({})
+          searchUsers({}),
+          listStudentGroups()
         ]);
 
         if (!active) return;
 
         setStats(dashboardResult);
         setUsers(usersResult || []);
+        setStudentGroups(studentGroupsResult || []);
       } catch (err) {
         if (active) {
           setError(err.message || "Failed to load admin dashboard.");
@@ -161,13 +167,30 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleStudentGroupApproval(groupId, approved) {
+    setError("");
+    setSuccess("");
+    setGroupApprovalUpdatingId(groupId);
+
+    try {
+      const updatedGroup = await changeStudentGroupApproval(groupId, approved);
+      setStudentGroups((current) =>
+        current.map((group) => (group.id === updatedGroup.id ? updatedGroup : group))
+      );
+      setSuccess(`Student group ${updatedGroup.name} updated.`);
+    } catch (err) {
+      setError(err.message || "Failed to update student group approval.");
+    } finally {
+      setGroupApprovalUpdatingId(null);
+    }
+  }
+
   return (
       <section className="contentPanel fadeIn">
         <div className="pageTitleRow">
           <div>
             <span className="eyebrow">Admin</span>
             <h1>Dashboard</h1>
-            <p>Manage users, approvals, and account states.</p>
           </div>
 
           <Link className="primaryButton smallButton" to="/admin/teachers/create">
@@ -176,6 +199,10 @@ export default function AdminDashboardPage() {
 
           <Link className="secondaryButton smallButton" to="/admin/faculties/create">
             Create Faculty
+          </Link>
+
+          <Link className="secondaryButton smallButton" to="/admin/specializations/create">
+            Create Specialization
           </Link>
         </div>
 
@@ -198,7 +225,6 @@ export default function AdminDashboardPage() {
           <div className="sectionHeader">
             <span className="eyebrow">Users</span>
             <h2>Search and manage users</h2>
-            <p>Search by email, filter by role/state, and update account state.</p>
           </div>
 
           <form className="filterPanel" onSubmit={handleSearchSubmit}>
@@ -301,6 +327,53 @@ export default function AdminDashboardPage() {
                         </td>
                       </tr>
                   ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="adminSection">
+          <div className="sectionHeader">
+            <span className="eyebrow">Student Groups</span>
+            <h2>Approve teacher-created groups</h2>
+          </div>
+
+          <div className="tableWrap">
+            <table className="adminTable">
+              <thead>
+                <tr>
+                  <th>Group</th>
+                  <th>Specialization</th>
+                  <th>Teacher</th>
+                  <th>Status</th>
+                  <th>Approval</th>
+                </tr>
+              </thead>
+              <tbody>
+                {studentGroups.length === 0 && (
+                  <tr>
+                    <td colSpan="5">No student groups found.</td>
+                  </tr>
+                )}
+
+                {studentGroups.map((group) => (
+                  <tr key={group.id}>
+                    <td>{group.name}</td>
+                    <td>{group.specializationName}</td>
+                    <td>{group.teacherEmail}</td>
+                    <td>{group.approved ? "Approved" : "Pending"}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="secondaryButton"
+                        disabled={groupApprovalUpdatingId === group.id}
+                        onClick={() => handleStudentGroupApproval(group.id, !group.approved)}
+                      >
+                        {group.approved ? "Set Pending" : "Approve"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

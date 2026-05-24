@@ -70,7 +70,6 @@ export default function StudentRegisterPage() {
         {step === 1 && (
           <StepCard
             title="Student Registration"
-            subtitle="Required fields first."
           >
             <form onSubmit={nextStep} className="formGrid">
               <label>
@@ -136,8 +135,7 @@ export default function StudentRegisterPage() {
 
         {step === 2 && (
           <StepCard
-            title="Extra Details"
-            subtitle="Optional details."
+            title="Student Registration"
           >
             <form onSubmit={handleSubmit} className="formGrid">
               <label>

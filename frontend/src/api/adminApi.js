@@ -60,3 +60,33 @@ export function createFaculty(payload) {
     body: JSON.stringify(payload)
   });
 }
+
+export function listSpecializations() {
+  return jsonRequest("/api/admin/academic/specializations", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function createSpecialization(payload) {
+  return jsonRequest("/api/admin/academic/specializations", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listStudentGroups() {
+  return jsonRequest("/api/admin/academic/student-groups", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function changeStudentGroupApproval(groupId, approved) {
+  return jsonRequest(`/api/admin/academic/student-groups/${groupId}/approval`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ approved })
+  });
+}

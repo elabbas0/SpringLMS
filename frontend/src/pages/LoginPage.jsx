@@ -51,9 +51,7 @@ export default function LoginPage() {
     <div className="centeredPage">
       <section className="authCard fadeIn">
         <div className="sectionHeader">
-          <span className="eyebrow">Welcome back</span>
           <h1>Login to SpringLMS</h1>
-          <p>Login with your backend account.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="formGrid">

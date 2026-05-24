@@ -94,7 +94,6 @@ export default function CreateTeacherPage() {
           <div>
             <span className="eyebrow">Admin</span>
             <h1>Create Teacher</h1>
-            <p>Create an active teacher account and assign a faculty from the searchable list.</p>
           </div>
 
           <div className="buttonRow compactRow">
@@ -213,6 +212,7 @@ export default function CreateTeacherPage() {
                 className="appSelect"
                 classNamePrefix="appSelect"
                 styles={darkSelectStyles}
+                menuPortalTarget={document.body}
                 options={facultyOptions}
                 value={facultyOptions.find((option) => option.value === form.facultyId) ?? null}
                 onChange={(option) => updateField("facultyId", option?.value ?? null)}

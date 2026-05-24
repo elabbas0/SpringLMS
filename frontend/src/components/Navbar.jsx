@@ -17,22 +17,6 @@ export default function Navbar() {
             <NavLink to="/register/student">Register</NavLink>
           </>
         )}
-
-        {user?.role === "ADMIN" && (
-          <>
-            <NavLink to="/admin/dashboard">Dashboard</NavLink>
-            <NavLink to="/admin/faculties/create">Create Faculty</NavLink>
-            <NavLink to="/admin/teachers/create">Create Teacher</NavLink>
-          </>
-        )}
-
-        {user?.role === "STUDENT" && (
-          <NavLink to={user.state === "PENDING_APPROVAL" ? "/student/pending" : "/student/dashboard"}>
-            Student
-          </NavLink>
-        )}
-
-        {user?.role === "TEACHER" && <NavLink to="/teacher/dashboard">Teacher</NavLink>}
       </nav>
 
       {user && (

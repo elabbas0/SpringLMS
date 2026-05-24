@@ -14,7 +14,12 @@ export const darkSelectStyles = {
     ...base,
     backgroundColor: "#181818",
     border: "1px solid #333",
-    overflow: "hidden"
+    overflow: "hidden",
+    zIndex: 9999
+  }),
+  menuPortal: (base) => ({
+    ...base,
+    zIndex: 9999
   }),
   menuList: (base) => ({
     ...base,

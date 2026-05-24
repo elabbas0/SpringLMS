@@ -114,10 +114,52 @@ button:disabled {
   flex-wrap: wrap;
 }
 
-.pageShell {
-  width: min(900px, calc(100% - 32px));
+.appLayout {
+  width: min(1280px, calc(100% - 32px));
   margin: 0 auto;
   padding: 28px 0;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+}
+
+.sideNav {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+
+.sideNavList {
+  display: grid;
+  gap: 6px;
+}
+
+.sideNavLink {
+  display: block;
+  padding: 10px 12px;
+  border: 1px solid #2c2c2c;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #cfcfcf;
+  background: #141414;
+}
+
+.sideNavLink:hover {
+  background: #1a1a1a;
+}
+
+.sideNavLink.active {
+  border-color: #555;
+  background: #1d1d1d;
+  color: #fff;
+}
+
+.sideNavLink.child {
+  margin-left: 16px;
+}
+
+.pageShell {
+  min-width: 0;
 }
 
 .centeredPage {
@@ -329,6 +371,19 @@ p {
   border: 1px solid #333;
 }
 
+.react-datepicker select,
+.react-datepicker__month-select,
+.react-datepicker__year-select {
+  background: #181818;
+  color: #eee;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+.react-datepicker__triangle {
+  display: none;
+}
+
 select {
   width: 100%;
   padding: 10px;
@@ -371,6 +426,72 @@ select:focus {
   gap: 8px;
   align-items: center;
   padding-bottom: 12px;
+}
+
+.inlineAssign {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 280px;
+}
+
+.assignSelect {
+  min-width: 220px;
+  flex: 1;
+}
+
+.groupCardList {
+  display: grid;
+  gap: 14px;
+}
+
+.groupCard {
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #171717;
+  padding: 16px;
+}
+
+.groupCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.groupCardHeader h3 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.groupMeta {
+  color: #aaa;
+}
+
+.groupAssignRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.groupMembers h4 {
+  margin: 0 0 10px;
+}
+
+.memberChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.memberChip {
+  border: 1px solid #444;
+  background: #202020;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #eee;
 }
 
 .tableWrap {
@@ -454,12 +575,26 @@ select:focus {
 }
 
 @media (max-width: 800px) {
+  .appLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .sideNav {
+    position: static;
+  }
+
   .filterPanel {
     grid-template-columns: 1fr;
   }
 
   .filterActions {
     padding-bottom: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .groupAssignRow,
+  .groupCardHeader {
     flex-direction: column;
     align-items: stretch;
   }
