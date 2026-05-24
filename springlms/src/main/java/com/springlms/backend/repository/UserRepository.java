@@ -17,6 +17,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     List<User> findByRole(Role role);
 
+    List<User> findByStudentProfile_Group_IdOrderByStudentProfileFirstNameAscStudentProfileLastNameAsc(Long groupId);
+
     long countByRole(Role role);
 
     long countByState(State state);

@@ -6,9 +6,9 @@ import lombok.*;
 
 @Entity
 @Table(
-        name = "student_groups",
+        name = "specializations",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"name", "specialization_id"})
+                @UniqueConstraint(columnNames = {"name", "faculty_id"})
         }
 )
 @Getter
@@ -16,30 +16,22 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class StudentGroup {
+public class Specialization {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 150)
     private String name;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "faculty_id", nullable = false)
     private Faculty faculty;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "specialization_id", nullable = false)
-    private Specialization specialization;
-
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_teacher_id", nullable = false)
-    private TeacherProfile createdByTeacher;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private Boolean approved = false;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_teacher_id")
+    private TeacherProfile assignedTeacher;
 
     @Builder.Default
     @Column(nullable = false)
