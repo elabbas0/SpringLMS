@@ -1,6 +1,7 @@
 package com.springlms.backend.model.user;
 
 import com.springlms.backend.model.academicstructure.Faculty;
+import com.springlms.backend.model.user.StudentFundingType;
 import com.springlms.backend.model.academicstructure.StudentGroup;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,6 +40,19 @@ public class StudentProfile {
 
     @Column(nullable = false, length = 500)
     private String address;
+
+    @Column(nullable = false)
+    private Double entranceScore;
+
+    @Column(nullable = false)
+    private Integer studyYear;
+
+    @Column(nullable = false)
+    private Integer admissionYear;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private StudentFundingType fundingType;
 
     @Column(length = 150)
     private String emergencyContactName;

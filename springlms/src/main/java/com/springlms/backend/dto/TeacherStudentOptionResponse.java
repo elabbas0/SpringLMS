@@ -1,6 +1,7 @@
 package com.springlms.backend.dto;
 
 import com.springlms.backend.model.user.State;
+import com.springlms.backend.model.user.StudentFundingType;
 
 public record TeacherStudentOptionResponse(
         Long userId,
@@ -8,6 +9,10 @@ public record TeacherStudentOptionResponse(
         String firstName,
         String lastName,
         State state,
-        String currentGroupName
+        String currentGroupName,
+        Double entranceScore,
+        Integer studyYear,
+        Integer admissionYear,
+        StudentFundingType fundingType
 ) {
 }

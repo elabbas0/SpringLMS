@@ -4,6 +4,7 @@ import com.springlms.backend.model.academicstructure.Faculty;
 import com.springlms.backend.model.academicstructure.Specialization;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.State;
+import com.springlms.backend.model.user.StudentFundingType;
 import com.springlms.backend.model.user.StudentProfile;
 import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
@@ -115,7 +116,11 @@ public class DemoDataSeeder implements CommandLineRunner {
                 "AZE1111111",
                 "Student",
                 "One",
-                State.ACTIVE
+                State.ACTIVE,
+                520.5,
+                2,
+                2024,
+                StudentFundingType.STATE_FUNDED
         );
 
         ensureStudent(
@@ -124,7 +129,11 @@ public class DemoDataSeeder implements CommandLineRunner {
                 "AZE2222222",
                 "Student",
                 "Two",
-                State.PENDING_APPROVAL
+                State.PENDING_APPROVAL,
+                478.0,
+                1,
+                2025,
+                StudentFundingType.PERSONAL_CREDIT
         );
     }
 
@@ -134,7 +143,11 @@ public class DemoDataSeeder implements CommandLineRunner {
             String serialNumber,
             String firstName,
             String lastName,
-            State state
+            State state,
+            Double entranceScore,
+            Integer studyYear,
+            Integer admissionYear,
+            StudentFundingType fundingType
     ) {
         if (userRepository.findByEmail(email).isPresent()) {
             return;
@@ -155,6 +168,10 @@ public class DemoDataSeeder implements CommandLineRunner {
                 .dateOfBirth(LocalDate.of(2004, 3, 14))
                 .phoneNumber("0500000002")
                 .address("Baku")
+                .entranceScore(entranceScore)
+                .studyYear(studyYear)
+                .admissionYear(admissionYear)
+                .fundingType(fundingType)
                 .emergencyContactName("Parent")
                 .emergencyContactPhone("0500000003")
                 .emergencyContactRelation("Parent")

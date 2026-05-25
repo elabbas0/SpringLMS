@@ -14,6 +14,10 @@ const initialForm = {
   dateOfBirth: "",
   phoneNumber: "",
   address: "",
+  entranceScore: "",
+  studyYear: "",
+  admissionYear: "",
+  fundingType: "STATE_FUNDED",
   emergencyContactName: "",
   emergencyContactPhone: "",
   emergencyContactRelation: ""
@@ -47,7 +51,14 @@ export default function StudentRegisterPage() {
     setMessage("");
 
     try {
-      const result = await registerStudent(form);
+      const payload = {
+        ...form,
+        entranceScore: form.entranceScore === "" ? null : Number(form.entranceScore),
+        studyYear: form.studyYear === "" ? null : Number(form.studyYear),
+        admissionYear: form.admissionYear === "" ? null : Number(form.admissionYear)
+      };
+
+      const result = await registerStudent(payload);
       setCreatedUser(result);
       setMessage("Registration submitted. Waiting for approval.");
       setForm(initialForm);
@@ -64,7 +75,7 @@ export default function StudentRegisterPage() {
       <div className="stepWrap">
         <div className="stepIndicator">
           <span className={step === 1 ? "activeStep" : ""}>1. Required</span>
-          <span className={step === 2 ? "activeStep" : ""}>2. Optional</span>
+          <span className={step === 2 ? "activeStep" : ""}>2. Details</span>
         </div>
 
         {step === 1 && (
@@ -140,13 +151,74 @@ export default function StudentRegisterPage() {
             <form onSubmit={handleSubmit} className="formGrid">
               <label>
                 Phone Number
-                <input name="phoneNumber" value={form.phoneNumber} onChange={updateField} placeholder="+123456789" />
+                <input
+                  name="phoneNumber"
+                  value={form.phoneNumber}
+                  onChange={updateField}
+                  placeholder="+123456789"
+                  required
+                />
               </label>
 
               <label>
                 Address
-                <textarea name="address" value={form.address} onChange={updateField} rows="3" />
+                <textarea
+                  name="address"
+                  value={form.address}
+                  onChange={updateField}
+                  rows="3"
+                  required
+                />
               </label>
+
+              <div className="twoColumn">
+                <label>
+                  Entrance Score
+                  <input
+                    name="entranceScore"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={form.entranceScore}
+                    onChange={updateField}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Study Year
+                  <input
+                    name="studyYear"
+                    type="number"
+                    min="1"
+                    value={form.studyYear}
+                    onChange={updateField}
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="twoColumn">
+                <label>
+                  Admission Year
+                  <input
+                    name="admissionYear"
+                    type="number"
+                    min="1900"
+                    value={form.admissionYear}
+                    onChange={updateField}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Funding Type
+                  <select name="fundingType" value={form.fundingType} onChange={updateField} required>
+                    <option value="STATE_FUNDED">State Funded</option>
+                    <option value="PERSONAL_CREDIT">Personal Credit</option>
+                  </select>
+                </label>
+              </div>
 
               <label>
                 Emergency Contact Name

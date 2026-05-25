@@ -61,6 +61,10 @@ public class UserService {
                 .dateOfBirth(request.dateOfBirth())
                 .phoneNumber(request.phoneNumber())
                 .address(request.address())
+                .entranceScore(request.entranceScore())
+                .studyYear(request.studyYear())
+                .admissionYear(request.admissionYear())
+                .fundingType(request.fundingType())
                 .emergencyContactName(request.emergencyContactName())
                 .emergencyContactPhone(request.emergencyContactPhone())
                 .emergencyContactRelation(request.emergencyContactRelation())
@@ -403,6 +407,42 @@ public class UserService {
             throw new IllegalArgumentException("Student date of birth is required.");
         }
 
+        if (profile.getPhoneNumber() == null || profile.getPhoneNumber().isBlank()) {
+            throw new IllegalArgumentException("Student phone number is required.");
+        }
+
+        if (profile.getAddress() == null || profile.getAddress().isBlank()) {
+            throw new IllegalArgumentException("Student address is required.");
+        }
+
+        if (profile.getEntranceScore() == null) {
+            throw new IllegalArgumentException("Entrance score is required.");
+        }
+
+        if (profile.getEntranceScore() < 0) {
+            throw new IllegalArgumentException("Entrance score cannot be negative.");
+        }
+
+        if (profile.getStudyYear() == null) {
+            throw new IllegalArgumentException("Study year is required.");
+        }
+
+        if (profile.getStudyYear() < 1) {
+            throw new IllegalArgumentException("Study year must be at least 1.");
+        }
+
+        if (profile.getAdmissionYear() == null) {
+            throw new IllegalArgumentException("Admission year is required.");
+        }
+
+        if (profile.getAdmissionYear() < 1900) {
+            throw new IllegalArgumentException("Admission year is invalid.");
+        }
+
+        if (profile.getFundingType() == null) {
+            throw new IllegalArgumentException("Funding type is required.");
+        }
+
         if (profile.getFaculty() != null || profile.getGroup() != null) {
             if (profile.getFaculty() == null) {
                 throw new IllegalArgumentException("Student faculty is required when a group is assigned.");
@@ -465,11 +505,19 @@ public class UserService {
     }
 
     private UserResponse toUserResponse(User user) {
+        StudentProfile studentProfile = user.getStudentProfile();
+
         return new UserResponse(
                 user.getId(),
                 user.getEmail(),
                 user.getRole(),
-                user.getState()
+                user.getState(),
+                studentProfile != null ? studentProfile.getFirstName() : null,
+                studentProfile != null ? studentProfile.getLastName() : null,
+                studentProfile != null ? studentProfile.getEntranceScore() : null,
+                studentProfile != null ? studentProfile.getStudyYear() : null,
+                studentProfile != null ? studentProfile.getAdmissionYear() : null,
+                studentProfile != null ? studentProfile.getFundingType() : null
         );
     }
 

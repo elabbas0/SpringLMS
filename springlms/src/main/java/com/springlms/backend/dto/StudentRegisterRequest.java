@@ -1,5 +1,7 @@
 package com.springlms.backend.dto;
 
+import com.springlms.backend.model.user.StudentFundingType;
+
 import java.time.LocalDate;
 
 public record StudentRegisterRequest(
@@ -12,6 +14,10 @@ public record StudentRegisterRequest(
         LocalDate dateOfBirth,
         String phoneNumber,
         String address,
+        Double entranceScore,
+        Integer studyYear,
+        Integer admissionYear,
+        StudentFundingType fundingType,
         String emergencyContactName,
         String emergencyContactPhone,
         String emergencyContactRelation

@@ -252,7 +252,11 @@ public class AcademicStructureService {
                 studentProfile.getFirstName(),
                 studentProfile.getLastName(),
                 user.getState(),
-                studentProfile.getGroup() != null ? studentProfile.getGroup().getName() : null
+                studentProfile.getGroup() != null ? studentProfile.getGroup().getName() : null,
+                studentProfile.getEntranceScore(),
+                studentProfile.getStudyYear(),
+                studentProfile.getAdmissionYear(),
+                studentProfile.getFundingType()
         );
     }
 
@@ -264,7 +268,11 @@ public class AcademicStructureService {
                 user.getEmail(),
                 studentProfile.getFirstName(),
                 studentProfile.getLastName(),
-                user.getState()
+                user.getState(),
+                studentProfile.getEntranceScore(),
+                studentProfile.getStudyYear(),
+                studentProfile.getAdmissionYear(),
+                studentProfile.getFundingType()
         );
     }
 }

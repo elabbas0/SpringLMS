@@ -44,6 +44,13 @@ function formatEnum(value) {
       .join(" ");
 }
 
+function formatFundingType(value) {
+  if (!value) return "-";
+  if (value === "STATE_FUNDED") return "Dovlet sifarisi";
+  if (value === "PERSONAL_CREDIT") return "Oz hesabina";
+  return formatEnum(value);
+}
+
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
@@ -278,7 +285,12 @@ export default function AdminDashboardPage() {
               <tr>
                 <th>ID</th>
                 <th>Email</th>
+                <th>Name</th>
                 <th>Role</th>
+                <th>Entrance</th>
+                <th>Year</th>
+                <th>Admission</th>
+                <th>Funding</th>
                 <th>Current State</th>
                 <th>Change State</th>
               </tr>
@@ -287,13 +299,13 @@ export default function AdminDashboardPage() {
               <tbody>
               {usersLoading && (
                   <tr>
-                    <td colSpan="5">Loading users...</td>
+                    <td colSpan="10">Loading users...</td>
                   </tr>
               )}
 
               {!usersLoading && users.length === 0 && (
                   <tr>
-                    <td colSpan="5">No users found.</td>
+                    <td colSpan="10">No users found.</td>
                   </tr>
               )}
 
@@ -302,11 +314,16 @@ export default function AdminDashboardPage() {
                       <tr key={user.id}>
                         <td>{user.id}</td>
                         <td>{user.email}</td>
+                        <td>{[user.firstName, user.lastName].filter(Boolean).join(" ") || "-"}</td>
                         <td>
                       <span className={`roleBadge role-${user.role?.toLowerCase()}`}>
                         {formatEnum(user.role)}
                       </span>
                         </td>
+                        <td>{user.entranceScore ?? "-"}</td>
+                        <td>{user.studyYear ?? "-"}</td>
+                        <td>{user.admissionYear ?? "-"}</td>
+                        <td>{formatFundingType(user.fundingType)}</td>
                         <td>
                       <span className={`stateBadge state-${user.state?.toLowerCase()}`}>
                         {formatEnum(user.state)}
