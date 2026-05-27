@@ -5,6 +5,7 @@ const navByRole = {
   STUDENT: [
     { to: "/student/dashboard", label: "Dashboard" },
     { to: "/student/schedule", label: "Schedule" },
+    { to: "/student/materials", label: "Materials" },
     { to: "/student/tasks", label: "Tasks" },
     { to: "/student/attendance", label: "Attendance" }
   ],
@@ -12,6 +13,7 @@ const navByRole = {
     { to: "/teacher/dashboard", label: "Dashboard" },
     { to: "/teacher/schedule", label: "Schedule" },
     { to: "/teacher/attendance", label: "Attendance" },
+    { to: "/teacher/materials", label: "Materials" },
     { to: "/teacher/groups", label: "Groups" },
     { to: "/teacher/students", label: "Students" },
     { to: "/teacher/standing", label: "Standing" }
@@ -20,6 +22,7 @@ const navByRole = {
     { to: "/admin/dashboard", label: "Dashboard" },
     { to: "/admin/faculties", label: "Faculties" },
     { to: "/admin/faculties/groups", label: "Groups", child: true },
+    { to: "/admin/courses", label: "Courses" },
     { to: "/admin/students", label: "Students" },
     { to: "/admin/teachers", label: "Teachers" }
   ]

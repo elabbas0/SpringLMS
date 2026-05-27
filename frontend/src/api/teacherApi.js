@@ -36,3 +36,25 @@ export function updateTeacherScheduleEntry(scheduleEntryId, payload) {
     body: JSON.stringify(payload)
   });
 }
+
+export function listTeacherSections() {
+  return jsonRequest("/api/teacher/materials/sections", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function listTeacherAttachments() {
+  return jsonRequest("/api/teacher/materials/attachments", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function createTeacherAttachment(payload) {
+  return jsonRequest("/api/teacher/materials/attachments", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+}

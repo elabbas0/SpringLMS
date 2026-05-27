@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import Select from "react-select";
 import {
   assignStudentToTeacherGroup,
   listTeacherAssignableStudents,
-  listTeacherStudentGroups
+  listTeacherStudentGroups,
+  listTeacherSchedule
 } from "../api/teacherApi.js";
 import { darkSelectStyles } from "../components/selectStyles.js";
 
 export default function TeacherDashboardPage() {
   const [studentGroups, setStudentGroups] = useState([]);
   const [students, setStudents] = useState([]);
+  const [schedule, setSchedule] = useState([]);
   const [studentSelectionByGroup, setStudentSelectionByGroup] = useState({});
   const [pageLoading, setPageLoading] = useState(true);
   const [assigningGroupId, setAssigningGroupId] = useState(null);
@@ -34,13 +37,15 @@ export default function TeacherDashboardPage() {
     setError("");
 
     try {
-      const [studentGroupResult, studentResult] = await Promise.all([
+      const [studentGroupResult, studentResult, scheduleResult] = await Promise.all([
         listTeacherStudentGroups(),
-        listTeacherAssignableStudents()
+        listTeacherAssignableStudents(),
+        listTeacherSchedule()
       ]);
 
       setStudentGroups(studentGroupResult || []);
       setStudents(studentResult || []);
+      setSchedule(scheduleResult || []);
     } catch (err) {
       setError(err.message || "Failed to load teacher data.");
     } finally {
@@ -93,6 +98,39 @@ export default function TeacherDashboardPage() {
       {error && <div className="errorBox">{error}</div>}
       {success && <div className="successBox">{success}</div>}
       {pageLoading && <div className="infoBox">Loading...</div>}
+
+      {!pageLoading && (
+        <div className="statGrid">
+          <article className="statCard">
+            <span>Groups</span>
+            <strong>{studentGroups.length}</strong>
+          </article>
+          <article className="statCard">
+            <span>Students</span>
+            <strong>{students.length}</strong>
+          </article>
+          <article className="statCard">
+            <span>Lessons</span>
+            <strong>{schedule.length}</strong>
+          </article>
+          <article className="statCard">
+            <span>Today</span>
+            <strong>{new Date().toLocaleDateString()}</strong>
+          </article>
+        </div>
+      )}
+
+      <div className="adminSection">
+        <div className="sectionHeader">
+          <span className="eyebrow">Quick Links</span>
+          <h2>Open your work areas</h2>
+        </div>
+        <div className="buttonRow compactRow">
+          <Link className="primaryButton smallButton" to="/teacher/schedule">Schedule</Link>
+          <Link className="secondaryButton smallButton" to="/teacher/attendance">Attendance</Link>
+          <Link className="secondaryButton smallButton" to="/teacher/materials">Materials</Link>
+        </div>
+      </div>
 
       <div className="adminSection">
         <div className="sectionHeader">

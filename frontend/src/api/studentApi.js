@@ -20,3 +20,10 @@ export function listStudentAttendanceEntries() {
     headers: authHeaders()
   });
 }
+
+export function listStudentMaterials() {
+  return jsonRequest("/api/student/materials", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}

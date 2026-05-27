@@ -127,3 +127,33 @@ export function generateStudentGroupSchedule(groupId) {
     headers: authHeaders()
   });
 }
+
+export function listCourses() {
+  return jsonRequest("/api/admin/courses", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function createCourse(payload) {
+  return jsonRequest("/api/admin/courses", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listCourseSections() {
+  return jsonRequest("/api/admin/courses/sections", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function createCourseSection(payload) {
+  return jsonRequest("/api/admin/courses/sections", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+}

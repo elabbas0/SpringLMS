@@ -619,6 +619,24 @@ select:focus {
   gap: 12px;
 }
 
+.courseSectionForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.courseSectionForm label {
+  margin-bottom: 0;
+}
+
+.fullSpan {
+  grid-column: 1 / -1;
+}
+
+.compactHeader {
+  margin-bottom: 10px;
+}
+
 .assignmentRow {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) 110px 110px 110px 110px minmax(0, 1fr) auto;
@@ -638,6 +656,35 @@ select:focus {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.materialLinkRow {
+  margin-top: 8px;
+  word-break: break-word;
+}
+
+.materialLinkRow a {
+  color: #9bd0ff;
+}
+
+.materialList {
+  display: grid;
+  gap: 10px;
+}
+
+.materialItem {
+  border: 1px solid #2d2d2d;
+  border-radius: 14px;
+  background: #171717;
+  padding: 14px;
+}
+
+.materialItemTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .tableWrap {
