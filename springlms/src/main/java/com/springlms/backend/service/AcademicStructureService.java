@@ -190,6 +190,10 @@ public class AcademicStructureService {
                 throw new IllegalArgumentException("Credit value must be between 1 and 15 for every assignment.");
             }
 
+            int lectureSessionsPerWeek = sanitizeSessionCount(assignmentRequest.lectureSessionsPerWeek());
+            int seminarSessionsPerWeek = sanitizeSessionCount(assignmentRequest.seminarSessionsPerWeek());
+            int labSessionsPerWeek = sanitizeSessionCount(assignmentRequest.labSessionsPerWeek());
+
             TeacherProfile teacherProfile = teacherProfileRepository.findByUserId(assignmentRequest.teacherUserId())
                     .orElseThrow(() -> new IllegalArgumentException("Teacher not found."));
 
@@ -198,6 +202,9 @@ public class AcademicStructureService {
                     .teacher(teacherProfile)
                     .subjectName(assignmentRequest.subjectName().trim())
                     .creditValue(assignmentRequest.creditValue())
+                    .lectureSessionsPerWeek(lectureSessionsPerWeek)
+                    .seminarSessionsPerWeek(seminarSessionsPerWeek)
+                    .labSessionsPerWeek(labSessionsPerWeek)
                     .build();
 
             teacherAssignments.add(teacherAssignment);
@@ -349,7 +356,22 @@ public class AcademicStructureService {
                 teacher.getUser().getEmail(),
                 teacherName.trim(),
                 assignment.getSubjectName(),
-                assignment.getCreditValue()
+                assignment.getCreditValue(),
+                assignment.getLectureSessionsPerWeek(),
+                assignment.getSeminarSessionsPerWeek(),
+                assignment.getLabSessionsPerWeek()
         );
+    }
+
+    private int sanitizeSessionCount(Integer value) {
+        if (value == null) {
+            return 0;
+        }
+
+        if (value < 0) {
+            throw new IllegalArgumentException("Session counts must be zero or greater.");
+        }
+
+        return value;
     }
 }

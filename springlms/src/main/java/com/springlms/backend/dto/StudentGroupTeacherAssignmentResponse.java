@@ -6,6 +6,9 @@ public record StudentGroupTeacherAssignmentResponse(
         String teacherEmail,
         String teacherName,
         String subjectName,
-        Integer creditValue
+        Integer creditValue,
+        Integer lectureSessionsPerWeek,
+        Integer seminarSessionsPerWeek,
+        Integer labSessionsPerWeek
 ) {
 }

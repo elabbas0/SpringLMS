@@ -31,6 +31,10 @@ public class StudentGroupScheduleEntry {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    private ScheduleSessionType sessionType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
     private DayOfWeek dayOfWeek;
 
     @Column(nullable = false)

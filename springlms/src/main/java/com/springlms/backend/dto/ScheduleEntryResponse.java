@@ -9,6 +9,7 @@ public record ScheduleEntryResponse(
         String teacherEmail,
         String teacherName,
         String subjectName,
+        String sessionType,
         String dayOfWeek,
         String startTime,
         String endTime

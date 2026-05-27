@@ -38,6 +38,11 @@ public class DemoDataSeeder implements CommandLineRunner {
             "Fizika"
     };
 
+    private static final int[] SUBJECT_CREDITS = {7, 5, 5, 6, 7};
+    private static final int[] SUBJECT_LECTURES = {1, 1, 1, 1, 1};
+    private static final int[] SUBJECT_SEMINARS = {1, 0, 0, 1, 0};
+    private static final int[] SUBJECT_LABS = {0, 1, 1, 0, 1};
+
     private final UserRepository userRepository;
     private final FacultyRepository facultyRepository;
     private final SpecializationRepository specializationRepository;
@@ -176,7 +181,10 @@ public class DemoDataSeeder implements CommandLineRunner {
                     .studentGroup(studentGroup)
                     .teacher(teachers.get(index).getTeacherProfile())
                     .subjectName(SUBJECT_NAMES[index])
-                    .creditValue(6)
+                    .creditValue(SUBJECT_CREDITS[index])
+                    .lectureSessionsPerWeek(SUBJECT_LECTURES[index])
+                    .seminarSessionsPerWeek(SUBJECT_SEMINARS[index])
+                    .labSessionsPerWeek(SUBJECT_LABS[index])
                     .build());
         }
 

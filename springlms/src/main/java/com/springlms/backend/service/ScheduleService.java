@@ -7,6 +7,7 @@ import com.springlms.backend.dto.UpdateScheduleEntryRequest;
 import com.springlms.backend.model.academicstructure.StudentGroup;
 import com.springlms.backend.model.academicstructure.StudentGroupTeacherAssignment;
 import com.springlms.backend.model.schedule.GlobalScheduleConfig;
+import com.springlms.backend.model.schedule.ScheduleSessionType;
 import com.springlms.backend.model.schedule.StudentGroupScheduleEntry;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.User;
@@ -16,6 +17,7 @@ import com.springlms.backend.repository.StudentGroupScheduleEntryRepository;
 import com.springlms.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
@@ -90,6 +92,7 @@ public class ScheduleService {
                 .toList();
     }
 
+    @Transactional
     public List<ScheduleEntryResponse> generateStudentGroupSchedule(Long groupId) {
         StudentGroup studentGroup = studentGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Student group not found."));
@@ -126,48 +129,25 @@ public class ScheduleService {
             throw new IllegalArgumentException("This group needs more assigned teacher-subject entries before auto schedule can be generated.");
         }
 
-        List<StudentGroupScheduleEntry> generatedEntries = new ArrayList<>();
-
-        studentGroupScheduleEntryRepository.deleteByStudentGroupId(groupId);
-
-        List<StudentGroupTeacherAssignment> expandedAssignments = buildDistributedAssignments(assignments);
-
-        int slotIndex = 0;
-        for (StudentGroupTeacherAssignment assignment : expandedAssignments) {
-            boolean placed = false;
-
-            while (slotIndex < availableSlots.size()) {
-                TimeSlot slot = availableSlots.get(slotIndex++);
-
-                if (hasTeacherOverlap(
-                        assignment.getTeacher().getUser().getEmail(),
-                        slot.dayOfWeek(),
-                        slot.startTime(),
-                        slot.endTime(),
-                        existingEntryIds
-                )) {
-                    continue;
-                }
-
-                StudentGroupScheduleEntry entry = StudentGroupScheduleEntry.builder()
-                        .studentGroup(studentGroup)
-                        .teacherAssignment(assignment)
-                        .dayOfWeek(slot.dayOfWeek())
-                        .startTime(slot.startTime())
-                        .endTime(slot.endTime())
-                        .build();
-
-                generatedEntries.add(entry);
-                placed = true;
-                break;
-            }
-
-            if (!placed) {
-                throw new IllegalArgumentException("Not enough free slots to generate schedule without overlaps.");
-            }
+        List<PlannedSessionUnit> sessionUnits = buildSessionUnits(assignments);
+        if (sessionUnits.isEmpty()) {
+            throw new IllegalArgumentException("This group needs at least one weekly session.");
         }
 
         studentGroupScheduleEntryRepository.deleteByStudentGroupId(groupId);
+
+        Map<DayOfWeek, Integer> dayTargets = buildDayTargets(sessionUnits.size(), studentGroup.getId());
+        List<PlannedSession> plannedSessions = buildSchedulePlacements(sessionUnits, availableSlots, existingEntryIds, dayTargets);
+        List<StudentGroupScheduleEntry> generatedEntries = plannedSessions.stream()
+                .map(plan -> StudentGroupScheduleEntry.builder()
+                        .studentGroup(studentGroup)
+                        .teacherAssignment(plan.assignment())
+                        .sessionType(plan.sessionType())
+                        .dayOfWeek(plan.slot().dayOfWeek())
+                        .startTime(plan.slot().startTime())
+                        .endTime(plan.slot().endTime())
+                        .build())
+                .toList();
 
         return generatedEntries.stream()
                 .map(studentGroupScheduleEntryRepository::save)
@@ -183,6 +163,16 @@ public class ScheduleService {
                 .stream()
                 .map(this::toScheduleEntryResponse)
                 .toList();
+    }
+
+    public List<ScheduleEntryResponse> listStudentSchedule(String studentEmail) {
+        User student = findStudentUser(studentEmail);
+
+        if (student.getStudentProfile() == null || student.getStudentProfile().getGroup() == null) {
+            return List.of();
+        }
+
+        return listStudentGroupSchedule(student.getStudentProfile().getGroup().getId());
     }
 
     public ScheduleEntryResponse updateTeacherScheduleEntry(String teacherEmail, Long scheduleEntryId, UpdateScheduleEntryRequest request) {
@@ -278,37 +268,190 @@ public class ScheduleService {
         }
 
         if (creditValue <= 2) return 1;
-        if (creditValue <= 4) return 2;
-        if (creditValue <= 6) return 3;
-        if (creditValue <= 8) return 4;
+        if (creditValue <= 4) return 1;
+        if (creditValue <= 8) return 2;
+        if (creditValue <= 10) return 3;
 
-        return (int) Math.ceil(creditValue / 2.0);
+        return 4;
     }
 
-    private List<StudentGroupTeacherAssignment> buildDistributedAssignments(List<StudentGroupTeacherAssignment> assignments) {
-        Map<Long, Integer> remainingSessions = new HashMap<>();
+    private List<PlannedSessionUnit> buildSessionUnits(List<StudentGroupTeacherAssignment> assignments) {
+        List<PlannedSessionUnit> units = new ArrayList<>();
 
         for (StudentGroupTeacherAssignment assignment : assignments) {
-            remainingSessions.put(assignment.getId(), sessionsPerWeekForCredits(assignment.getCreditValue()));
+            int lectureSessions = normalizeSessionCount(assignment.getLectureSessionsPerWeek());
+            int seminarSessions = normalizeSessionCount(assignment.getSeminarSessionsPerWeek());
+            int labSessions = normalizeSessionCount(assignment.getLabSessionsPerWeek());
+
+            if (lectureSessions + seminarSessions + labSessions == 0) {
+                int fallback = sessionsPerWeekForCredits(assignment.getCreditValue());
+                int[] defaults = defaultSplitForFallback(fallback);
+                lectureSessions = defaults[0];
+                seminarSessions = defaults[1];
+                labSessions = defaults[2];
+            }
+
+            addRepeatedUnits(units, assignment, ScheduleSessionType.LECTURE, lectureSessions);
+            addRepeatedUnits(units, assignment, ScheduleSessionType.SEMINAR, seminarSessions);
+            addRepeatedUnits(units, assignment, ScheduleSessionType.LABORATORY, labSessions);
         }
 
-        List<StudentGroupTeacherAssignment> distributed = new ArrayList<>();
-        boolean addedInRound;
+        return units;
+    }
 
-        do {
-            addedInRound = false;
+    private List<PlannedSession> buildSchedulePlacements(
+            List<PlannedSessionUnit> assignments,
+            List<TimeSlot> availableSlots,
+            Set<Long> existingEntryIds,
+            Map<DayOfWeek, Integer> dayTargets
+    ) {
+        List<PlannedSession> placements = new ArrayList<>();
+        Set<String> usedSlotKeys = new HashSet<>();
+        Set<Integer> usedAssignmentIndexes = new HashSet<>();
+        Map<DayOfWeek, Integer> dayUsageCounts = new HashMap<>();
 
-            for (StudentGroupTeacherAssignment assignment : assignments) {
-                Integer remaining = remainingSessions.getOrDefault(assignment.getId(), 0);
-                if (remaining > 0) {
-                    distributed.add(assignment);
-                    remainingSessions.put(assignment.getId(), remaining - 1);
-                    addedInRound = true;
+        if (backtrackSchedule(assignments, availableSlots, existingEntryIds, usedSlotKeys, usedAssignmentIndexes, dayUsageCounts, dayTargets, placements)) {
+            return placements;
+        }
+
+        throw new IllegalArgumentException("Not enough free slots to generate schedule without overlaps.");
+    }
+
+    private boolean backtrackSchedule(
+            List<PlannedSessionUnit> assignments,
+            List<TimeSlot> availableSlots,
+            Set<Long> existingEntryIds,
+            Set<String> usedSlotKeys,
+            Set<Integer> usedAssignmentIndexes,
+            Map<DayOfWeek, Integer> dayUsageCounts,
+            Map<DayOfWeek, Integer> dayTargets,
+            List<PlannedSession> placements
+    ) {
+        if (usedAssignmentIndexes.size() == assignments.size()) {
+            return true;
+        }
+
+        int nextAssignmentIndex = -1;
+        List<TimeSlot> nextCandidates = null;
+
+        for (int i = 0; i < assignments.size(); i++) {
+            if (usedAssignmentIndexes.contains(i)) {
+                continue;
+            }
+
+            PlannedSessionUnit assignment = assignments.get(i);
+            List<TimeSlot> candidates = availableSlots.stream()
+                    .filter(slot -> dayTargets.getOrDefault(slot.dayOfWeek(), 0) > 0)
+                    .filter(slot -> dayUsageCounts.getOrDefault(slot.dayOfWeek(), 0) < dayTargets.getOrDefault(slot.dayOfWeek(), 0))
+                    .filter(slot -> !usedSlotKeys.contains(slot.dayOfWeek() + ":" + slot.startTime()))
+                    .filter(slot -> !hasTeacherOverlap(
+                            assignment.assignment().getTeacher().getUser().getEmail(),
+                            slot.dayOfWeek(),
+                            slot.startTime(),
+                            slot.endTime(),
+                            existingEntryIds
+                    ))
+                    .sorted(Comparator
+                            .comparingInt((TimeSlot slot) -> dayTargets.getOrDefault(slot.dayOfWeek(), 0) - dayUsageCounts.getOrDefault(slot.dayOfWeek(), 0))
+                            .reversed()
+                            .thenComparing(TimeSlot::dayOfWeek)
+                            .thenComparing(TimeSlot::startTime))
+                    .toList();
+
+            if (candidates.isEmpty()) {
+                return false;
+            }
+
+            if (nextCandidates == null || candidates.size() < nextCandidates.size()) {
+                nextAssignmentIndex = i;
+                nextCandidates = candidates;
+                if (candidates.size() == 1) {
+                    break;
                 }
             }
-        } while (addedInRound);
+        }
 
-        return distributed;
+        if (nextAssignmentIndex == -1 || nextCandidates == null) {
+            return false;
+        }
+
+        PlannedSessionUnit assignment = assignments.get(nextAssignmentIndex);
+        usedAssignmentIndexes.add(nextAssignmentIndex);
+
+        for (TimeSlot slot : nextCandidates) {
+            String slotKey = slot.dayOfWeek() + ":" + slot.startTime();
+            usedSlotKeys.add(slotKey);
+            dayUsageCounts.put(slot.dayOfWeek(), dayUsageCounts.getOrDefault(slot.dayOfWeek(), 0) + 1);
+            placements.add(new PlannedSession(assignment.assignment(), assignment.sessionType(), slot));
+
+            if (backtrackSchedule(assignments, availableSlots, existingEntryIds, usedSlotKeys, usedAssignmentIndexes, dayUsageCounts, dayTargets, placements)) {
+                return true;
+            }
+
+            placements.remove(placements.size() - 1);
+            usedSlotKeys.remove(slotKey);
+            int currentUsage = dayUsageCounts.getOrDefault(slot.dayOfWeek(), 0) - 1;
+            if (currentUsage <= 0) {
+                dayUsageCounts.remove(slot.dayOfWeek());
+            } else {
+                dayUsageCounts.put(slot.dayOfWeek(), currentUsage);
+            }
+        }
+
+        usedAssignmentIndexes.remove(nextAssignmentIndex);
+        return false;
+    }
+
+    private Map<DayOfWeek, Integer> buildDayTargets(int totalSessions, Long groupId) {
+        int activeDays = Math.min(WEEK_DAYS.size(), Math.max(3, (int) Math.ceil(totalSessions / 3.0)));
+        int basePerDay = totalSessions / activeDays;
+        int remainder = totalSessions % activeDays;
+        int offset = groupId == null ? 0 : Math.floorMod(groupId.intValue(), WEEK_DAYS.size());
+
+        Map<DayOfWeek, Integer> targets = new HashMap<>();
+        for (DayOfWeek day : WEEK_DAYS) {
+            targets.put(day, 0);
+        }
+
+        for (int i = 0; i < activeDays; i++) {
+            DayOfWeek day = WEEK_DAYS.get((i + offset) % WEEK_DAYS.size());
+            targets.put(day, basePerDay + (i < remainder ? 1 : 0));
+        }
+
+        return targets;
+    }
+
+    private int normalizeSessionCount(Integer value) {
+        if (value == null) {
+            return 0;
+        }
+
+        if (value < 0) {
+            throw new IllegalArgumentException("Session count cannot be negative.");
+        }
+
+        return value;
+    }
+
+    private int[] defaultSplitForFallback(int fallbackSessions) {
+        return switch (fallbackSessions) {
+            case 1 -> new int[]{1, 0, 0};
+            case 2 -> new int[]{1, 1, 0};
+            case 3 -> new int[]{2, 1, 0};
+            case 4 -> new int[]{2, 1, 1};
+            default -> new int[]{3, 1, 1};
+        };
+    }
+
+    private void addRepeatedUnits(
+            List<PlannedSessionUnit> units,
+            StudentGroupTeacherAssignment assignment,
+            ScheduleSessionType sessionType,
+            int count
+    ) {
+        for (int i = 0; i < count; i++) {
+            units.add(new PlannedSessionUnit(assignment, sessionType));
+        }
     }
 
     private boolean hasTeacherOverlap(String teacherEmail, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
@@ -426,6 +569,17 @@ public class ScheduleService {
         return user;
     }
 
+    private User findStudentUser(String studentEmail) {
+        User user = userRepository.findByEmail(studentEmail)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found."));
+
+        if (user.getRole() != Role.STUDENT) {
+            throw new IllegalArgumentException("Current user is not a student.");
+        }
+
+        return user;
+    }
+
     private GlobalScheduleConfigResponse toGlobalConfigResponse(GlobalScheduleConfig config) {
         return new GlobalScheduleConfigResponse(
                 config.getAbsenceValue(),
@@ -456,6 +610,7 @@ public class ScheduleService {
                 assignment.getTeacher().getUser().getEmail(),
                 teacherName.trim(),
                 assignment.getSubjectName(),
+                entry.getSessionType().name(),
                 entry.getDayOfWeek().name(),
                 entry.getStartTime().toString(),
                 entry.getEndTime().toString()
@@ -463,5 +618,11 @@ public class ScheduleService {
     }
 
     private record TimeSlot(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
+    }
+
+    private record PlannedSessionUnit(StudentGroupTeacherAssignment assignment, ScheduleSessionType sessionType) {
+    }
+
+    private record PlannedSession(StudentGroupTeacherAssignment assignment, ScheduleSessionType sessionType, TimeSlot slot) {
     }
 }

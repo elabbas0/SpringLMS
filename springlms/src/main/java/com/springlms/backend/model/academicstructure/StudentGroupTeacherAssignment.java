@@ -36,4 +36,16 @@ public class StudentGroupTeacherAssignment {
 
     @Column(nullable = false)
     private Integer creditValue;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer lectureSessionsPerWeek = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer seminarSessionsPerWeek = 0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer labSessionsPerWeek = 0;
 }
