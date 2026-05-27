@@ -56,4 +56,8 @@ public class CourseSection {
     @Builder.Default
     @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<SectionEnrollment> enrollments = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CourseAssignment> assignments = new LinkedHashSet<>();
 }

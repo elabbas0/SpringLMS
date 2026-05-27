@@ -9,6 +9,8 @@ import com.springlms.backend.dto.LoginRequest;
 import com.springlms.backend.dto.LoginResponse;
 import com.springlms.backend.dto.StudentRegisterRequest;
 import com.springlms.backend.dto.UserResponse;
+import com.springlms.backend.exception.ForbiddenException;
+import com.springlms.backend.exception.UnauthorizedException;
 import com.springlms.backend.model.academicstructure.Faculty;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.State;
@@ -79,18 +81,18 @@ public class UserService {
 
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password."));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid email or password.");
+            throw new UnauthorizedException("Invalid email or password.");
         }
 
         if (user.getState() == State.PENDING_APPROVAL) {
-            throw new IllegalArgumentException("Your account is pending admin approval.");
+            throw new ForbiddenException("Your account is pending admin approval.");
         }
 
         if (user.getState() != State.ACTIVE) {
-            throw new IllegalArgumentException("Your account is not active.");
+            throw new ForbiddenException("Your account is not active.");
         }
 
         String token = jwtService.generateToken(user);

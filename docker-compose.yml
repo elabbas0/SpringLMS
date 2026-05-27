@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: springlms-postgres
+    environment:
+      POSTGRES_DB: springlms
+      POSTGRES_USER: springlms
+      POSTGRES_PASSWORD: springlms
+    ports:
+      - "5432:5432"
+    volumes:
+      - springlms-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U springlms -d springlms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./springlms
+    container_name: springlms-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/springlms
+      SPRING_DATASOURCE_USERNAME: springlms
+      SPRING_DATASOURCE_PASSWORD: springlms
+      APP_JWT_SECRET: change-this-dev-secret-before-production
+      APP_JWT_EXPIRATION_MS: 43200000
+    ports:
+      - "8080:8080"
+
+volumes:
+  springlms-postgres-data:

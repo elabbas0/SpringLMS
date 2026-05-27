@@ -4,16 +4,17 @@ import com.springlms.backend.model.user.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "course_attachments")
+@Table(name = "course_assignments")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CourseAttachment {
+public class CourseAssignment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,34 +28,23 @@ public class CourseAttachment {
     @JoinColumn(name = "teacher_id", nullable = false)
     private TeacherProfile teacher;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "attachment_type", nullable = false, length = 30)
-    private AttachmentType attachmentType;
-
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(name = "resource_url", nullable = false, length = 1000)
-    private String resourceUrl;
-
-    @Column(length = 1000)
+    @Column(length = 4000)
     private String description;
 
-    @Column(length = 255)
-    private String fileName;
-
-    @Column(length = 100)
-    private String fileContentType;
-
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    private byte[] fileData;
-
-    @Builder.Default
     @Column(nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDate dueDate;
+
+    @Column(nullable = false)
+    private Integer maxScore;
 
     @Builder.Default
     @Column(nullable = false)
     private Boolean archived = false;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 }
