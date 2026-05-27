@@ -13,6 +13,9 @@ import CreateTeacherPage from "./pages/CreateTeacherPage.jsx";
 import StudentDashboardPage from "./pages/StudentDashboardPage.jsx";
 import StudentPendingPage from "./pages/StudentPendingPage.jsx";
 import TeacherDashboardPage from "./pages/TeacherDashboardPage.jsx";
+import TeacherSchedulePage from "./pages/TeacherSchedulePage.jsx";
+import ManageStudentGroupsPage from "./pages/ManageStudentGroupsPage.jsx";
+import GlobalConfigPage from "./pages/GlobalConfigPage.jsx";
 import ForbiddenPage from "./pages/ForbiddenPage.jsx";
 import PlaceholderPage from "./pages/PlaceholderPage.jsx";
 
@@ -54,7 +57,8 @@ export default function App() {
             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
             <Route path="/admin/faculties" element={<CreateFacultyPage />} />
             <Route path="/admin/faculties/create" element={<CreateFacultyPage />} />
-            <Route path="/admin/faculties/groups" element={<CreateSpecializationPage />} />
+            <Route path="/admin/faculties/groups" element={<ManageStudentGroupsPage />} />
+            <Route path="/admin/config" element={<GlobalConfigPage />} />
             <Route path="/admin/specializations/create" element={<CreateSpecializationPage />} />
             <Route path="/admin/teachers/create" element={<CreateTeacherPage />} />
             <Route path="/admin/students" element={<PlaceholderPage eyebrow="Admin" title="Students" />} />
@@ -71,7 +75,7 @@ export default function App() {
 
           <Route element={<ProtectedRoute requiredRole="TEACHER" />}>
             <Route path="/teacher/dashboard" element={<PlaceholderPage eyebrow="Teacher" title="Dashboard" />} />
-            <Route path="/teacher/schedule" element={<PlaceholderPage eyebrow="Teacher" title="Schedule" />} />
+            <Route path="/teacher/schedule" element={<TeacherSchedulePage />} />
             <Route path="/teacher/groups" element={<TeacherDashboardPage />} />
             <Route path="/teacher/students" element={<PlaceholderPage eyebrow="Teacher" title="Students" />} />
             <Route path="/teacher/standing" element={<PlaceholderPage eyebrow="Teacher" title="Standing" />} />

@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  changeStudentGroupApproval,
-  changeUserState,
-  getAdminDashboard,
-  listStudentGroups,
-  searchUsers
-} from "../api/adminApi.js";
+import { changeUserState, getAdminDashboard, listStudentGroups, searchUsers } from "../api/adminApi.js";
 
 const dashboardCards = [
   ["totalUsers", "Total Users"],
@@ -38,10 +32,10 @@ function formatEnum(value) {
   if (!value) return "";
 
   return value
-      .toLowerCase()
-      .split("_")
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function formatFundingType(value) {
@@ -55,26 +49,22 @@ export default function AdminDashboardPage() {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [studentGroups, setStudentGroups] = useState([]);
-
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("");
   const [state, setState] = useState("");
-
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
   const [stateUpdatingUserId, setStateUpdatingUserId] = useState(null);
-  const [groupApprovalUpdatingId, setGroupApprovalUpdatingId] = useState(null);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const activeFilters = useMemo(
-      () => ({
-        query,
-        role,
-        state
-      }),
-      [query, role, state]
+    () => ({
+      query,
+      role,
+      state
+    }),
+    [query, role, state]
   );
 
   async function loadDashboard() {
@@ -159,9 +149,7 @@ export default function AdminDashboardPage() {
       const updatedUser = await changeUserState(userId, nextState);
 
       setUsers((currentUsers) =>
-          currentUsers.map((user) =>
-              user.id === updatedUser.id ? updatedUser : user
-          )
+        currentUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user))
       );
 
       await loadDashboard();
@@ -174,114 +162,95 @@ export default function AdminDashboardPage() {
     }
   }
 
-  async function handleStudentGroupApproval(groupId, approved) {
-    setError("");
-    setSuccess("");
-    setGroupApprovalUpdatingId(groupId);
-
-    try {
-      const updatedGroup = await changeStudentGroupApproval(groupId, approved);
-      setStudentGroups((current) =>
-        current.map((group) => (group.id === updatedGroup.id ? updatedGroup : group))
-      );
-      setSuccess(`Student group ${updatedGroup.name} updated.`);
-    } catch (err) {
-      setError(err.message || "Failed to update student group approval.");
-    } finally {
-      setGroupApprovalUpdatingId(null);
-    }
-  }
-
   return (
-      <section className="contentPanel fadeIn">
-        <div className="pageTitleRow">
-          <div>
-            <span className="eyebrow">Admin</span>
-            <h1>Dashboard</h1>
-          </div>
-
-          <Link className="primaryButton smallButton" to="/admin/teachers/create">
-            Create Teacher
-          </Link>
-
-          <Link className="secondaryButton smallButton" to="/admin/faculties/create">
-            Create Faculty
-          </Link>
-
-          <Link className="secondaryButton smallButton" to="/admin/specializations/create">
-            Create Specialization
-          </Link>
+    <section className="contentPanel fadeIn">
+      <div className="pageTitleRow">
+        <div>
+          <span className="eyebrow">Admin</span>
+          <h1>Dashboard</h1>
         </div>
 
-        {dashboardLoading && <div className="infoBox">Loading dashboard...</div>}
-        {error && <div className="errorBox">{error}</div>}
-        {success && <div className="successBox">{success}</div>}
+        <div className="buttonRow compactRow">
+          <Link className="primaryButton smallButton" to="/admin/faculties/groups">
+            Student Groups
+          </Link>
+          <Link className="secondaryButton smallButton" to="/admin/config">
+            Global Config
+          </Link>
+          <Link className="secondaryButton smallButton" to="/admin/teachers/create">
+            Create Teacher
+          </Link>
+        </div>
+      </div>
 
-        {stats && (
-            <div className="statGrid adminStatGrid">
-              {dashboardCards.map(([key, label]) => (
-                  <article className="statCard" key={key}>
-                    <span>{label}</span>
-                    <strong>{stats[key] ?? 0}</strong>
-                  </article>
+      {dashboardLoading && <div className="infoBox">Loading dashboard...</div>}
+      {error && <div className="errorBox">{error}</div>}
+      {success && <div className="successBox">{success}</div>}
+
+      {stats && (
+        <div className="statGrid adminStatGrid">
+          {dashboardCards.map(([key, label]) => (
+            <article className="statCard" key={key}>
+              <span>{label}</span>
+              <strong>{stats[key] ?? 0}</strong>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <div className="adminSection">
+        <div className="sectionHeader">
+          <span className="eyebrow">Users</span>
+          <h2>Search and manage users</h2>
+        </div>
+
+        <form className="filterPanel" onSubmit={handleSearchSubmit}>
+          <label>
+            Search
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search by email..."
+            />
+          </label>
+
+          <label>
+            Role
+            <select value={role} onChange={(event) => setRole(event.target.value)}>
+              <option value="">All roles</option>
+              {roleOptions.map((option) => (
+                <option value={option} key={option}>
+                  {formatEnum(option)}
+                </option>
               ))}
-            </div>
-        )}
+            </select>
+          </label>
 
-        <div className="adminSection">
-          <div className="sectionHeader">
-            <span className="eyebrow">Users</span>
-            <h2>Search and manage users</h2>
+          <label>
+            State
+            <select value={state} onChange={(event) => setState(event.target.value)}>
+              <option value="">All states</option>
+              {stateOptions.map((option) => (
+                <option value={option} key={option}>
+                  {formatEnum(option)}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="filterActions">
+            <button type="submit" disabled={usersLoading}>
+              {usersLoading ? "Searching..." : "Search"}
+            </button>
+            <button type="button" className="secondaryButton" onClick={handleResetFilters}>
+              Reset
+            </button>
           </div>
+        </form>
 
-          <form className="filterPanel" onSubmit={handleSearchSubmit}>
-            <label>
-              Search
-              <input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search by email..."
-              />
-            </label>
-
-            <label>
-              Role
-              <select value={role} onChange={(event) => setRole(event.target.value)}>
-                <option value="">All roles</option>
-                {roleOptions.map((option) => (
-                    <option value={option} key={option}>
-                      {formatEnum(option)}
-                    </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              State
-              <select value={state} onChange={(event) => setState(event.target.value)}>
-                <option value="">All states</option>
-                {stateOptions.map((option) => (
-                    <option value={option} key={option}>
-                      {formatEnum(option)}
-                    </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="filterActions">
-              <button type="submit" disabled={usersLoading}>
-                {usersLoading ? "Searching..." : "Search"}
-              </button>
-
-              <button type="button" className="secondaryButton" onClick={handleResetFilters}>
-                Reset
-              </button>
-            </div>
-          </form>
-
-          <div className="tableWrap">
-            <table className="adminTable">
-              <thead>
+        <div className="tableWrap">
+          <table className="adminTable">
+            <thead>
               <tr>
                 <th>ID</th>
                 <th>Email</th>
@@ -294,107 +263,99 @@ export default function AdminDashboardPage() {
                 <th>Current State</th>
                 <th>Change State</th>
               </tr>
-              </thead>
-
-              <tbody>
+            </thead>
+            <tbody>
               {usersLoading && (
-                  <tr>
-                    <td colSpan="10">Loading users...</td>
-                  </tr>
+                <tr>
+                  <td colSpan="10">Loading users...</td>
+                </tr>
               )}
 
               {!usersLoading && users.length === 0 && (
-                  <tr>
-                    <td colSpan="10">No users found.</td>
-                  </tr>
+                <tr>
+                  <td colSpan="10">No users found.</td>
+                </tr>
               )}
 
               {!usersLoading &&
-                  users.map((user) => (
-                      <tr key={user.id}>
-                        <td>{user.id}</td>
-                        <td>{user.email}</td>
-                        <td>{[user.firstName, user.lastName].filter(Boolean).join(" ") || "-"}</td>
-                        <td>
+                users.map((user) => (
+                  <tr key={user.id}>
+                    <td>{user.id}</td>
+                    <td>{user.email}</td>
+                    <td>{[user.firstName, user.lastName].filter(Boolean).join(" ") || "-"}</td>
+                    <td>
                       <span className={`roleBadge role-${user.role?.toLowerCase()}`}>
                         {formatEnum(user.role)}
                       </span>
-                        </td>
-                        <td>{user.entranceScore ?? "-"}</td>
-                        <td>{user.studyYear ?? "-"}</td>
-                        <td>{user.admissionYear ?? "-"}</td>
-                        <td>{formatFundingType(user.fundingType)}</td>
-                        <td>
+                    </td>
+                    <td>{user.entranceScore ?? "-"}</td>
+                    <td>{user.studyYear ?? "-"}</td>
+                    <td>{user.admissionYear ?? "-"}</td>
+                    <td>{formatFundingType(user.fundingType)}</td>
+                    <td>
                       <span className={`stateBadge state-${user.state?.toLowerCase()}`}>
                         {formatEnum(user.state)}
                       </span>
-                        </td>
-                        <td>
-                          <select
-                              value={user.state}
-                              disabled={stateUpdatingUserId === user.id}
-                              onChange={(event) => handleStateChange(user.id, event.target.value)}
-                          >
-                            {stateOptions.map((option) => (
-                                <option value={option} key={option}>
-                                  {formatEnum(option)}
-                                </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="adminSection">
-          <div className="sectionHeader">
-            <span className="eyebrow">Student Groups</span>
-            <h2>Approve teacher-created groups</h2>
-          </div>
-
-          <div className="tableWrap">
-            <table className="adminTable">
-              <thead>
-                <tr>
-                  <th>Group</th>
-                  <th>Specialization</th>
-                  <th>Teacher</th>
-                  <th>Status</th>
-                  <th>Approval</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentGroups.length === 0 && (
-                  <tr>
-                    <td colSpan="5">No student groups found.</td>
-                  </tr>
-                )}
-
-                {studentGroups.map((group) => (
-                  <tr key={group.id}>
-                    <td>{group.name}</td>
-                    <td>{group.specializationName}</td>
-                    <td>{group.teacherEmail}</td>
-                    <td>{group.approved ? "Approved" : "Pending"}</td>
+                    </td>
                     <td>
-                      <button
-                        type="button"
-                        className="secondaryButton"
-                        disabled={groupApprovalUpdatingId === group.id}
-                        onClick={() => handleStudentGroupApproval(group.id, !group.approved)}
+                      <select
+                        value={user.state}
+                        disabled={stateUpdatingUserId === user.id}
+                        onChange={(event) => handleStateChange(user.id, event.target.value)}
                       >
-                        {group.approved ? "Set Pending" : "Approve"}
-                      </button>
+                        {stateOptions.map((option) => (
+                          <option value={option} key={option}>
+                            {formatEnum(option)}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+            </tbody>
+          </table>
         </div>
-      </section>
+      </div>
+
+      <div className="adminSection">
+        <div className="sectionHeader">
+          <span className="eyebrow">Student Groups</span>
+          <h2>Current groups</h2>
+        </div>
+
+        <div className="tableWrap">
+          <table className="adminTable">
+            <thead>
+              <tr>
+                <th>Group</th>
+                <th>Specialization</th>
+                <th>Year</th>
+                <th>Teachers</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {studentGroups.length === 0 && (
+                <tr>
+                  <td colSpan="5">No student groups found.</td>
+                </tr>
+              )}
+
+              {studentGroups.map((group) => (
+                <tr key={group.id}>
+                  <td>{group.name}</td>
+                  <td>{group.specializationName}</td>
+                  <td>{group.studyYear}</td>
+                  <td>
+                    {group.teacherAssignments?.map((assignment) => `${assignment.subjectName} (${assignment.creditValue})`).join(", ") || "-"}
+                  </td>
+                  <td>{group.approved ? "Approved" : "Pending"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
   );
 }

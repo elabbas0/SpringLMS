@@ -1,12 +1,5 @@
 import { authHeaders, jsonRequest } from "./apiClient.js";
 
-export function listTeacherSpecializations() {
-  return jsonRequest("/api/teacher/academic/specializations", {
-    method: "GET",
-    headers: authHeaders()
-  });
-}
-
 export function listTeacherStudentGroups() {
   return jsonRequest("/api/teacher/academic/student-groups", {
     method: "GET",
@@ -21,18 +14,25 @@ export function listTeacherAssignableStudents() {
   });
 }
 
-export function createTeacherStudentGroup(payload) {
-  return jsonRequest("/api/teacher/academic/student-groups", {
-    method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(payload)
-  });
-}
-
 export function assignStudentToTeacherGroup(groupId, studentUserId) {
   return jsonRequest(`/api/teacher/academic/student-groups/${groupId}/students`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({ studentUserId })
+  });
+}
+
+export function listTeacherSchedule() {
+  return jsonRequest("/api/teacher/academic/schedule", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function updateTeacherScheduleEntry(scheduleEntryId, payload) {
+  return jsonRequest(`/api/teacher/academic/schedule/${scheduleEntryId}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
   });
 }

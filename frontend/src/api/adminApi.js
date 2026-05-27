@@ -83,10 +83,47 @@ export function listStudentGroups() {
   });
 }
 
+export function createStudentGroup(payload) {
+  return jsonRequest("/api/admin/academic/student-groups", {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+}
+
 export function changeStudentGroupApproval(groupId, approved) {
   return jsonRequest(`/api/admin/academic/student-groups/${groupId}/approval`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify({ approved })
+  });
+}
+
+export function getGlobalConfig() {
+  return jsonRequest("/api/admin/academic/config", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function updateGlobalConfig(payload) {
+  return jsonRequest("/api/admin/academic/config", {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(payload)
+  });
+}
+
+export function listStudentGroupSchedule(groupId) {
+  return jsonRequest(`/api/admin/academic/student-groups/${groupId}/schedule`, {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function generateStudentGroupSchedule(groupId) {
+  return jsonRequest(`/api/admin/academic/student-groups/${groupId}/schedule/generate`, {
+    method: "POST",
+    headers: authHeaders()
   });
 }

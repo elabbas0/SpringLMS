@@ -12,7 +12,8 @@ import { darkSelectStyles } from "../components/selectStyles.js";
 const initialForm = {
   name: "",
   facultyId: null,
-  teacherUserId: null
+  teacherUserId: null,
+  semesterCreditTarget: 30
 };
 
 export default function CreateSpecializationPage() {
@@ -143,6 +144,18 @@ export default function CreateSpecializationPage() {
         </div>
 
         <label>
+          Semester Credit Target
+          <input
+            type="number"
+            min="1"
+            max="60"
+            value={form.semesterCreditTarget}
+            onChange={(event) => updateField("semesterCreditTarget", Number(event.target.value))}
+            required
+          />
+        </label>
+
+        <label>
           Assigned Teacher
           <Select
             className="appSelect"
@@ -175,13 +188,14 @@ export default function CreateSpecializationPage() {
               <tr>
                 <th>Name</th>
                 <th>Faculty</th>
+                <th>Credits</th>
                 <th>Assigned Teacher</th>
               </tr>
             </thead>
             <tbody>
               {specializations.length === 0 && (
                 <tr>
-                  <td colSpan="3">No specializations yet.</td>
+                  <td colSpan="4">No specializations yet.</td>
                 </tr>
               )}
 
@@ -189,6 +203,7 @@ export default function CreateSpecializationPage() {
                 <tr key={specialization.id}>
                   <td>{specialization.name}</td>
                   <td>{specialization.facultyName}</td>
+                  <td>{specialization.semesterCreditTarget}</td>
                   <td>{specialization.teacherEmail || "Unassigned"}</td>
                 </tr>
               ))}
