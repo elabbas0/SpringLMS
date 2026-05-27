@@ -14,7 +14,10 @@ import { darkSelectStyles } from "../components/selectStyles.js";
 const initialAssignment = {
   teacherUserId: null,
   subjectName: "",
-  creditValue: 6
+  creditValue: 6,
+  lectureSessionsPerWeek: 1,
+  seminarSessionsPerWeek: 0,
+  labSessionsPerWeek: 0
 };
 
 const initialForm = {
@@ -268,6 +271,42 @@ export default function ManageStudentGroupsPage() {
                 </label>
 
                 <label>
+                  Lecture
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={assignment.lectureSessionsPerWeek}
+                    onChange={(event) => updateAssignment(index, "lectureSessionsPerWeek", Number(event.target.value))}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Seminar
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={assignment.seminarSessionsPerWeek}
+                    onChange={(event) => updateAssignment(index, "seminarSessionsPerWeek", Number(event.target.value))}
+                    required
+                  />
+                </label>
+
+                <label>
+                  Lab
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    value={assignment.labSessionsPerWeek}
+                    onChange={(event) => updateAssignment(index, "labSessionsPerWeek", Number(event.target.value))}
+                    required
+                  />
+                </label>
+
+                <label>
                   Teacher
                   <Select
                     className="appSelect"
@@ -351,6 +390,10 @@ export default function ManageStudentGroupsPage() {
                   {group.teacherAssignments?.map((assignment) => (
                     <span className="memberChip" key={assignment.id}>
                       {assignment.subjectName} ({assignment.creditValue}) - {assignment.teacherName}
+                      <span className="chipMeta">
+                        {" "}
+                        L{assignment.lectureSessionsPerWeek}/S{assignment.seminarSessionsPerWeek}/Lab{assignment.labSessionsPerWeek}
+                      </span>
                     </span>
                   ))}
                 </div>
@@ -364,6 +407,7 @@ export default function ManageStudentGroupsPage() {
                       <thead>
                         <tr>
                           <th>Subject</th>
+                          <th>Type</th>
                           <th>Teacher</th>
                           <th>Day</th>
                           <th>Time</th>
@@ -373,6 +417,7 @@ export default function ManageStudentGroupsPage() {
                         {scheduleByGroupId[group.id].map((entry) => (
                           <tr key={entry.id}>
                             <td>{entry.subjectName}</td>
+                            <td>{entry.sessionType}</td>
                             <td>{entry.teacherName}</td>
                             <td>{entry.dayOfWeek}</td>
                             <td>{entry.startTime.slice(0, 5)} - {entry.endTime.slice(0, 5)}</td>

@@ -11,6 +11,7 @@ import CreateFacultyPage from "./pages/CreateFacultyPage.jsx";
 import CreateSpecializationPage from "./pages/CreateSpecializationPage.jsx";
 import CreateTeacherPage from "./pages/CreateTeacherPage.jsx";
 import StudentDashboardPage from "./pages/StudentDashboardPage.jsx";
+import StudentSchedulePage from "./pages/StudentSchedulePage.jsx";
 import StudentPendingPage from "./pages/StudentPendingPage.jsx";
 import TeacherDashboardPage from "./pages/TeacherDashboardPage.jsx";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage.jsx";
@@ -68,7 +69,7 @@ export default function App() {
           <Route element={<ProtectedRoute requiredRole="STUDENT" />}>
             <Route path="/student/dashboard" element={<StudentDashboardPage />} />
             <Route path="/student/pending" element={<StudentPendingPage />} />
-            <Route path="/student/schedule" element={<PlaceholderPage eyebrow="Student" title="Schedule" />} />
+            <Route path="/student/schedule" element={<StudentSchedulePage />} />
             <Route path="/student/tasks" element={<PlaceholderPage eyebrow="Student" title="Tasks" />} />
             <Route path="/student/attendance" element={<PlaceholderPage eyebrow="Student" title="Attendance" />} />
           </Route>

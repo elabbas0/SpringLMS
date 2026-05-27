@@ -119,6 +119,10 @@ export default function TeacherDashboardPage() {
                   {group.teacherAssignments?.map((assignment) => (
                     <span className="memberChip" key={assignment.id}>
                       {assignment.subjectName} ({assignment.creditValue}) - {assignment.teacherName}
+                      <span className="chipMeta">
+                        {" "}
+                        L{assignment.lectureSessionsPerWeek}/S{assignment.seminarSessionsPerWeek}/Lab{assignment.labSessionsPerWeek}
+                      </span>
                     </span>
                   ))}
                 </div>

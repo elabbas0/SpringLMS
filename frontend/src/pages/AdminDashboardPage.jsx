@@ -347,7 +347,10 @@ export default function AdminDashboardPage() {
                   <td>{group.specializationName}</td>
                   <td>{group.studyYear}</td>
                   <td>
-                    {group.teacherAssignments?.map((assignment) => `${assignment.subjectName} (${assignment.creditValue})`).join(", ") || "-"}
+                    {group.teacherAssignments?.map(
+                      (assignment) =>
+                        `${assignment.subjectName} (${assignment.creditValue}) L${assignment.lectureSessionsPerWeek}/S${assignment.seminarSessionsPerWeek}/Lab${assignment.labSessionsPerWeek}`
+                    ).join(", ") || "-"}
                   </td>
                   <td>{group.approved ? "Approved" : "Pending"}</td>
                 </tr>
