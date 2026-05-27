@@ -1,8 +1,10 @@
 package com.springlms.backend.model.academicstructure;
 
-import com.springlms.backend.model.user.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -33,9 +35,8 @@ public class StudentGroup {
     @JoinColumn(name = "specialization_id", nullable = false)
     private Specialization specialization;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by_teacher_id", nullable = false)
-    private TeacherProfile createdByTeacher;
+    @Column(nullable = false)
+    private Integer studyYear;
 
     @Builder.Default
     @Column(nullable = false)
@@ -44,4 +45,8 @@ public class StudentGroup {
     @Builder.Default
     @Column(nullable = false)
     private Boolean archived = false;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "studentGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<StudentGroupTeacherAssignment> teacherAssignments = new LinkedHashSet<>();
 }

@@ -7,6 +7,7 @@ public record SpecializationResponse(
         String facultyName,
         Long teacherUserId,
         String teacherEmail,
+        Integer semesterCreditTarget,
         Boolean archived
 ) {
 }

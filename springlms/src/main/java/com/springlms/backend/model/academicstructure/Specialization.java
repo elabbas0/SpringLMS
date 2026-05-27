@@ -35,5 +35,9 @@ public class Specialization {
 
     @Builder.Default
     @Column(nullable = false)
+    private Integer semesterCreditTarget = 30;
+
+    @Builder.Default
+    @Column(nullable = false)
     private Boolean archived = false;
 }

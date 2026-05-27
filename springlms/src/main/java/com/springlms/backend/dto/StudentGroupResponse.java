@@ -9,10 +9,10 @@ public record StudentGroupResponse(
         String specializationName,
         Long facultyId,
         String facultyName,
-        Long teacherUserId,
-        String teacherEmail,
+        Integer studyYear,
         Boolean approved,
         Boolean archived,
+        List<StudentGroupTeacherAssignmentResponse> teacherAssignments,
         List<GroupStudentResponse> students
 ) {
 }

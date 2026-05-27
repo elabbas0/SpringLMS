@@ -4,13 +4,16 @@ import com.springlms.backend.dto.AssignStudentToGroupRequest;
 import com.springlms.backend.dto.ChangeStudentGroupApprovalRequest;
 import com.springlms.backend.dto.CreateSpecializationRequest;
 import com.springlms.backend.dto.CreateStudentGroupRequest;
+import com.springlms.backend.dto.CreateStudentGroupTeacherAssignmentRequest;
 import com.springlms.backend.dto.GroupStudentResponse;
 import com.springlms.backend.dto.SpecializationResponse;
 import com.springlms.backend.dto.StudentGroupResponse;
+import com.springlms.backend.dto.StudentGroupTeacherAssignmentResponse;
 import com.springlms.backend.dto.TeacherStudentOptionResponse;
 import com.springlms.backend.model.academicstructure.Faculty;
 import com.springlms.backend.model.academicstructure.Specialization;
 import com.springlms.backend.model.academicstructure.StudentGroup;
+import com.springlms.backend.model.academicstructure.StudentGroupTeacherAssignment;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.StudentProfile;
 import com.springlms.backend.model.user.TeacherProfile;
@@ -23,7 +26,9 @@ import com.springlms.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -66,10 +71,16 @@ public class AcademicStructureService {
                     .orElseThrow(() -> new IllegalArgumentException("Teacher not found."));
         }
 
+        Integer semesterCreditTarget = request.semesterCreditTarget() == null ? 30 : request.semesterCreditTarget();
+        if (semesterCreditTarget < 1 || semesterCreditTarget > 60) {
+            throw new IllegalArgumentException("Semester credit target must be between 1 and 60.");
+        }
+
         Specialization specialization = Specialization.builder()
                 .name(specializationName)
                 .faculty(faculty)
                 .assignedTeacher(teacherProfile)
+                .semesterCreditTarget(semesterCreditTarget)
                 .archived(false)
                 .build();
 
@@ -106,9 +117,9 @@ public class AcademicStructureService {
     }
 
     public List<StudentGroupResponse> listTeacherStudentGroups(String teacherEmail) {
-        TeacherProfile teacherProfile = findTeacherProfileByEmail(teacherEmail);
+        findTeacherProfileByEmail(teacherEmail);
 
-        return studentGroupRepository.findByCreatedByTeacherIdOrderByIdDesc(teacherProfile.getId())
+        return studentGroupRepository.findDistinctByTeacherAssignmentsTeacherUserEmailOrderByIdDesc(teacherEmail)
                 .stream()
                 .map(this::toStudentGroupResponse)
                 .toList();
@@ -124,7 +135,7 @@ public class AcademicStructureService {
                 .toList();
     }
 
-    public StudentGroupResponse createTeacherStudentGroup(String teacherEmail, CreateStudentGroupRequest request) {
+    public StudentGroupResponse createStudentGroup(CreateStudentGroupRequest request) {
         if (request.name() == null || request.name().isBlank()) {
             throw new IllegalArgumentException("Student group name is required.");
         }
@@ -133,14 +144,16 @@ public class AcademicStructureService {
             throw new IllegalArgumentException("Specialization is required.");
         }
 
-        TeacherProfile teacherProfile = findTeacherProfileByEmail(teacherEmail);
+        if (request.studyYear() == null || request.studyYear() < 1 || request.studyYear() > 4) {
+            throw new IllegalArgumentException("Study year must be between 1 and 4.");
+        }
+
+        if (request.teacherAssignments() == null || request.teacherAssignments().isEmpty()) {
+            throw new IllegalArgumentException("At least one teacher assignment is required.");
+        }
+
         Specialization specialization = specializationRepository.findById(request.specializationId())
                 .orElseThrow(() -> new IllegalArgumentException("Specialization not found."));
-
-        if (specialization.getAssignedTeacher() == null
-                || !specialization.getAssignedTeacher().getId().equals(teacherProfile.getId())) {
-            throw new IllegalArgumentException("You can only create student groups for your assigned specializations.");
-        }
 
         String studentGroupName = request.name().trim().toLowerCase();
 
@@ -152,10 +165,52 @@ public class AcademicStructureService {
                 .name(studentGroupName)
                 .faculty(specialization.getFaculty())
                 .specialization(specialization)
-                .createdByTeacher(teacherProfile)
-                .approved(false)
+                .studyYear(request.studyYear())
+                .approved(true)
                 .archived(false)
                 .build();
+
+        Set<StudentGroupTeacherAssignment> teacherAssignments = new LinkedHashSet<>();
+        int totalCredits = 0;
+
+        for (CreateStudentGroupTeacherAssignmentRequest assignmentRequest : request.teacherAssignments()) {
+            if (assignmentRequest == null) {
+                continue;
+            }
+
+            if (assignmentRequest.teacherUserId() == null) {
+                throw new IllegalArgumentException("Teacher is required for every assignment.");
+            }
+
+            if (assignmentRequest.subjectName() == null || assignmentRequest.subjectName().isBlank()) {
+                throw new IllegalArgumentException("Subject name is required for every assignment.");
+            }
+
+            if (assignmentRequest.creditValue() == null || assignmentRequest.creditValue() < 1 || assignmentRequest.creditValue() > 15) {
+                throw new IllegalArgumentException("Credit value must be between 1 and 15 for every assignment.");
+            }
+
+            TeacherProfile teacherProfile = teacherProfileRepository.findByUserId(assignmentRequest.teacherUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("Teacher not found."));
+
+            StudentGroupTeacherAssignment teacherAssignment = StudentGroupTeacherAssignment.builder()
+                    .studentGroup(studentGroup)
+                    .teacher(teacherProfile)
+                    .subjectName(assignmentRequest.subjectName().trim())
+                    .creditValue(assignmentRequest.creditValue())
+                    .build();
+
+            teacherAssignments.add(teacherAssignment);
+            totalCredits += assignmentRequest.creditValue();
+        }
+
+        if (totalCredits != specialization.getSemesterCreditTarget()) {
+            throw new IllegalArgumentException(
+                    "Group subject credits must total " + specialization.getSemesterCreditTarget() + " for this specialization."
+            );
+        }
+
+        studentGroup.setTeacherAssignments(teacherAssignments);
 
         return toStudentGroupResponse(studentGroupRepository.save(studentGroup));
     }
@@ -173,8 +228,12 @@ public class AcademicStructureService {
         StudentGroup studentGroup = studentGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Student group not found."));
 
-        if (!studentGroup.getCreatedByTeacher().getId().equals(teacherProfile.getId())) {
-            throw new IllegalArgumentException("You can only manage your own student groups.");
+        boolean isAssignedTeacher = studentGroup.getTeacherAssignments()
+                .stream()
+                .anyMatch(assignment -> assignment.getTeacher().getId().equals(teacherProfile.getId()));
+
+        if (!isAssignedTeacher) {
+            throw new IllegalArgumentException("You can only manage your assigned student groups.");
         }
 
         if (!Boolean.TRUE.equals(studentGroup.getApproved())) {
@@ -220,6 +279,7 @@ public class AcademicStructureService {
                 specialization.getFaculty().getName(),
                 assignedTeacher != null ? assignedTeacher.getUser().getId() : null,
                 assignedTeacher != null ? assignedTeacher.getUser().getEmail() : null,
+                specialization.getSemesterCreditTarget(),
                 specialization.getArchived()
         );
     }
@@ -232,10 +292,13 @@ public class AcademicStructureService {
                 studentGroup.getSpecialization().getName(),
                 studentGroup.getFaculty().getId(),
                 studentGroup.getFaculty().getName(),
-                studentGroup.getCreatedByTeacher().getUser().getId(),
-                studentGroup.getCreatedByTeacher().getUser().getEmail(),
+                studentGroup.getStudyYear(),
                 studentGroup.getApproved(),
                 studentGroup.getArchived(),
+                studentGroup.getTeacherAssignments()
+                        .stream()
+                        .map(this::toStudentGroupTeacherAssignmentResponse)
+                        .toList(),
                 userRepository.findByStudentProfile_Group_IdOrderByStudentProfileFirstNameAscStudentProfileLastNameAsc(studentGroup.getId())
                         .stream()
                         .map(this::toGroupStudentResponse)
@@ -273,6 +336,20 @@ public class AcademicStructureService {
                 studentProfile.getStudyYear(),
                 studentProfile.getAdmissionYear(),
                 studentProfile.getFundingType()
+        );
+    }
+
+    private StudentGroupTeacherAssignmentResponse toStudentGroupTeacherAssignmentResponse(StudentGroupTeacherAssignment assignment) {
+        TeacherProfile teacher = assignment.getTeacher();
+        String teacherName = teacher.getFirstName() + " " + teacher.getLastName();
+
+        return new StudentGroupTeacherAssignmentResponse(
+                assignment.getId(),
+                teacher.getUser().getId(),
+                teacher.getUser().getEmail(),
+                teacherName.trim(),
+                assignment.getSubjectName(),
+                assignment.getCreditValue()
         );
     }
 }

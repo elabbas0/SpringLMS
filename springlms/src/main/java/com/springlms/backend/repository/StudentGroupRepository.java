@@ -11,5 +11,5 @@ public interface StudentGroupRepository extends JpaRepository<StudentGroup, Long
 
     List<StudentGroup> findAllByOrderByIdDesc();
 
-    List<StudentGroup> findByCreatedByTeacherIdOrderByIdDesc(Long createdByTeacherId);
+    List<StudentGroup> findDistinctByTeacherAssignmentsTeacherUserEmailOrderByIdDesc(String teacherEmail);
 }
