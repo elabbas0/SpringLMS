@@ -1,13 +1,21 @@
 package com.springlms.backend.config;
 
 import com.springlms.backend.model.academicstructure.Faculty;
+import com.springlms.backend.model.academicstructure.AcademicTerm;
 import com.springlms.backend.model.academicstructure.Specialization;
 import com.springlms.backend.model.academicstructure.StudentGroup;
 import com.springlms.backend.model.academicstructure.StudentGroupTeacherAssignment;
 import com.springlms.backend.model.attendance.AttendanceRecord;
 import com.springlms.backend.model.attendance.AttendanceSession;
 import com.springlms.backend.model.attendance.AttendanceStatus;
+import com.springlms.backend.model.course.AttachmentType;
+import com.springlms.backend.model.course.Course;
+import com.springlms.backend.model.course.CourseAttachment;
+import com.springlms.backend.model.course.CourseSection;
+import com.springlms.backend.model.course.TeacherAssignment;
+import com.springlms.backend.model.course.TeacherAssignmentType;
 import com.springlms.backend.model.schedule.StudentGroupScheduleEntry;
+import com.springlms.backend.model.enrollment.SectionEnrollment;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.State;
 import com.springlms.backend.model.user.StudentFundingType;
@@ -17,6 +25,12 @@ import com.springlms.backend.model.user.User;
 import com.springlms.backend.repository.AttendanceRecordRepository;
 import com.springlms.backend.repository.AttendanceSessionRepository;
 import com.springlms.backend.repository.FacultyRepository;
+import com.springlms.backend.repository.AcademicTermRepository;
+import com.springlms.backend.repository.CourseAttachmentRepository;
+import com.springlms.backend.repository.CourseRepository;
+import com.springlms.backend.repository.CourseSectionRepository;
+import com.springlms.backend.repository.SectionEnrollmentRepository;
+import com.springlms.backend.repository.TeacherAssignmentRepository;
 import com.springlms.backend.repository.SpecializationRepository;
 import com.springlms.backend.repository.StudentGroupRepository;
 import com.springlms.backend.repository.StudentGroupScheduleEntryRepository;
@@ -64,6 +78,12 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final StudentGroupScheduleEntryRepository studentGroupScheduleEntryRepository;
     private final AttendanceSessionRepository attendanceSessionRepository;
     private final AttendanceRecordRepository attendanceRecordRepository;
+    private final AcademicTermRepository academicTermRepository;
+    private final CourseRepository courseRepository;
+    private final CourseSectionRepository courseSectionRepository;
+    private final TeacherAssignmentRepository teacherAssignmentRepository;
+    private final SectionEnrollmentRepository sectionEnrollmentRepository;
+    private final CourseAttachmentRepository courseAttachmentRepository;
     private final ScheduleService scheduleService;
     private final PasswordEncoder passwordEncoder;
 
@@ -77,6 +97,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         ensureStudentsForGroups(studentGroups);
         ensureDemoSchedules(studentGroups);
         ensureDemoAttendance(studentGroups);
+        ensureDemoCourseMaterials(teachers, studentGroups);
 
         System.out.println();
         System.out.println("==============================================");
@@ -86,6 +107,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         System.out.println(" Groups seeded: 6525a1, 6525a2, 6525a3, 6525a4");
         System.out.println(" Students seeded: 20 per group");
         System.out.println(" Attendance seeded: 2 weeks");
+        System.out.println(" Course materials seeded: 1 demo course section");
         System.out.println(" Example teacher: teacher.demo1@springlms.local / " + DEMO_PASSWORD);
         System.out.println(" Example student: student.6525a1.01@springlms.local / " + DEMO_PASSWORD);
         System.out.println("==============================================");
@@ -254,6 +276,109 @@ public class DemoDataSeeder implements CommandLineRunner {
                 }
             }
         }
+    }
+
+    private void ensureDemoCourseMaterials(List<User> teachers, List<StudentGroup> studentGroups) {
+        AcademicTerm term = academicTermRepository.findFirstByActiveTrueAndArchivedFalseOrderByStartDateDesc()
+                .orElseGet(() -> academicTermRepository.save(AcademicTerm.builder()
+                        .name("2026 Spring")
+                        .startDate(LocalDate.of(2026, 2, 1))
+                        .endDate(LocalDate.of(2026, 7, 31))
+                        .active(true)
+                        .archived(false)
+                        .build()));
+
+        Course course = courseRepository.findByCodeIgnoreCase("WEB101")
+                .orElseGet(() -> courseRepository.save(Course.builder()
+                        .code("WEB101")
+                        .name("Web Programming")
+                        .description("Introductory web programming materials.")
+                        .credits(5)
+                        .archived(false)
+                        .build()));
+
+        StudentGroup targetGroup = studentGroups.stream()
+                .filter(group -> "6525a4".equalsIgnoreCase(group.getName()))
+                .findFirst()
+                .orElse(studentGroups.getFirst());
+
+        CourseSection section = courseSectionRepository.findByArchivedFalseOrderBySectionCodeAsc()
+                .stream()
+                .filter(current -> current.getCourse().getId().equals(course.getId())
+                        && current.getAcademicTerm().getId().equals(term.getId())
+                        && "WP-6525A4".equalsIgnoreCase(current.getSectionCode()))
+                .findFirst()
+                .orElseGet(() -> courseSectionRepository.save(CourseSection.builder()
+                        .course(course)
+                        .academicTerm(term)
+                        .sectionCode("WP-6525A4")
+                        .archived(false)
+                        .build()));
+
+        assignTeacher(section, teachers.get(0).getTeacherProfile(), TeacherAssignmentType.LECTURE);
+        assignTeacher(section, teachers.get(1).getTeacherProfile(), TeacherAssignmentType.SEMINAR);
+        assignTeacher(section, teachers.get(2).getTeacherProfile(), TeacherAssignmentType.LABORATORY);
+
+        if (courseSectionRepository.findDistinctByEnrollmentsStudentUserEmailOrderBySectionCodeAsc("student." + targetGroup.getName() + ".01@springlms.local")
+                .stream().noneMatch(current -> current.getId().equals(section.getId()))) {
+            List<User> students = userRepository.findByStudentProfile_Group_IdOrderByStudentProfileFirstNameAscStudentProfileLastNameAsc(targetGroup.getId());
+            for (User student : students) {
+                SectionEnrollment enrollment = sectionEnrollmentRepository.findByStudentIdAndSectionId(student.getStudentProfile().getId(), section.getId())
+                        .orElseGet(() -> sectionEnrollmentRepository.save(SectionEnrollment.builder()
+                                .student(student.getStudentProfile())
+                                .section(section)
+                                .active(true)
+                                .build()));
+                section.getEnrollments().add(enrollment);
+            }
+        }
+
+        ensureAttachment(section, teachers.get(0).getTeacherProfile(), AttachmentType.DOCUMENT, "Course outline", "https://example.com/web-programming-outline.pdf", "Syllabus and weekly outline.");
+        ensureAttachment(section, teachers.get(1).getTeacherProfile(), AttachmentType.IMAGE, "UI reference", "https://example.com/web-programming-ui.png", "Reference image for the first lab.");
+        ensureAttachment(section, teachers.get(2).getTeacherProfile(), AttachmentType.MODEL, "CAD model", "https://example.com/web-programming-model.dwg", "Example model file.");
+        ensureAttachment(section, teachers.get(0).getTeacherProfile(), AttachmentType.LINK, "Online resources", "https://example.com/web-programming-resources", "Extra links.");
+    }
+
+    private void assignTeacher(CourseSection section, TeacherProfile teacher, TeacherAssignmentType assignmentType) {
+        boolean exists = teacherAssignmentRepository.findBySectionId(section.getId())
+                .stream()
+                .anyMatch(assignment -> assignment.getTeacher().getId().equals(teacher.getId())
+                        && assignment.getAssignmentType() == assignmentType);
+        if (exists) {
+            return;
+        }
+
+        TeacherAssignment assignment = teacherAssignmentRepository.save(TeacherAssignment.builder()
+                .section(section)
+                .teacher(teacher)
+                .assignmentType(assignmentType)
+                .build());
+        section.getTeacherAssignments().add(assignment);
+    }
+
+    private void ensureAttachment(
+            CourseSection section,
+            TeacherProfile teacher,
+            AttachmentType attachmentType,
+            String title,
+            String resourceUrl,
+            String description
+    ) {
+        boolean exists = courseAttachmentRepository.findBySectionIdOrderByCreatedAtDesc(section.getId())
+                .stream()
+                .anyMatch(attachment -> attachment.getTitle().equalsIgnoreCase(title));
+        if (exists) {
+            return;
+        }
+
+        courseAttachmentRepository.save(CourseAttachment.builder()
+                .section(section)
+                .teacher(teacher)
+                .attachmentType(attachmentType)
+                .title(title)
+                .resourceUrl(resourceUrl)
+                .description(description)
+                .build());
     }
 
     private void seedAttendanceRecords(AttendanceSession session, StudentGroup studentGroup, int weekIndex) {

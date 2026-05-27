@@ -1,8 +1,12 @@
 package com.springlms.backend.model.course;
 
 import com.springlms.backend.model.academicstructure.AcademicTerm;
+import com.springlms.backend.model.enrollment.SectionEnrollment;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(
@@ -36,4 +40,20 @@ public class CourseSection {
     @Builder.Default
     @Column(nullable = false)
     private Boolean archived = false;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CourseSectionGroup> groups = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<TeacherAssignment> teacherAssignments = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CourseAttachment> attachments = new LinkedHashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "section", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<SectionEnrollment> enrollments = new LinkedHashSet<>();
 }
