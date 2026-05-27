@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.time.temporal.TemporalAdjusters;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +67,10 @@ public class ScheduleService {
                 )
         );
         config.setLectureLengthMinutes(requirePositive(request.lectureLengthMinutes(), "Lecture length"));
+        config.setSemesterWeeks(requirePositive(request.semesterWeeks(), "Semester weeks"));
+        config.setMinimumAttendancePercentForFinalExam(
+                requirePositive(request.minimumAttendancePercentForFinalExam(), "Minimum attendance percent for final exam")
+        );
         config.setYear1StartTime(parseTime(request.year1StartTime(), "Year 1 start time"));
         config.setYear1EndTime(parseTime(request.year1EndTime(), "Year 1 end time"));
         config.setYear2StartTime(parseTime(request.year2StartTime(), "Year 2 start time"));
@@ -191,7 +197,7 @@ public class ScheduleService {
 
         validateWithinYearWindow(entry.getStudentGroup().getStudyYear(), startTime, endTime, config);
 
-        if (hasTeacherOverlap(teacherEmail, dayOfWeek, startTime, endTime, entry.getId())) {
+        if (hasTeacherOverlap(teacherEmail, entry.getSessionType(), dayOfWeek, startTime, endTime, entry.getId())) {
             throw new IllegalArgumentException("Selected time overlaps with another lecture in your schedule.");
         }
 
@@ -214,6 +220,8 @@ public class ScheduleService {
                         .lateValue(0.5)
                         .minimumAssignedGroupsForAutoSchedule(2)
                         .lectureLengthMinutes(80)
+                        .semesterWeeks(15)
+                        .minimumAttendancePercentForFinalExam(70)
                         .year1StartTime(LocalTime.of(9, 0))
                         .year1EndTime(LocalTime.of(13, 20))
                         .year2StartTime(LocalTime.of(9, 0))
@@ -346,6 +354,7 @@ public class ScheduleService {
                     .filter(slot -> !usedSlotKeys.contains(slot.dayOfWeek() + ":" + slot.startTime()))
                     .filter(slot -> !hasTeacherOverlap(
                             assignment.assignment().getTeacher().getUser().getEmail(),
+                            assignment.sessionType(),
                             slot.dayOfWeek(),
                             slot.startTime(),
                             slot.endTime(),
@@ -454,20 +463,51 @@ public class ScheduleService {
         }
     }
 
-    private boolean hasTeacherOverlap(String teacherEmail, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {
-        return hasTeacherOverlap(teacherEmail, dayOfWeek, startTime, endTime, (Long) null);
+    private boolean hasTeacherOverlap(
+            String teacherEmail,
+            ScheduleSessionType requestedSessionType,
+            DayOfWeek dayOfWeek,
+            LocalTime startTime,
+            LocalTime endTime
+    ) {
+        return hasTeacherOverlap(teacherEmail, requestedSessionType, dayOfWeek, startTime, endTime, (Long) null);
     }
 
-    private boolean hasTeacherOverlap(String teacherEmail, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, Long ignoreEntryId) {
+    private boolean hasTeacherOverlap(
+            String teacherEmail,
+            ScheduleSessionType requestedSessionType,
+            DayOfWeek dayOfWeek,
+            LocalTime startTime,
+            LocalTime endTime,
+            Long ignoreEntryId
+    ) {
         Set<Long> ignoreIds = ignoreEntryId == null ? Set.of() : Set.of(ignoreEntryId);
-        return hasTeacherOverlap(teacherEmail, dayOfWeek, startTime, endTime, ignoreIds);
+        return hasTeacherOverlap(teacherEmail, requestedSessionType, dayOfWeek, startTime, endTime, ignoreIds);
     }
 
-    private boolean hasTeacherOverlap(String teacherEmail, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, Set<Long> ignoreEntryIds) {
+    private boolean hasTeacherOverlap(
+            String teacherEmail,
+            ScheduleSessionType requestedSessionType,
+            DayOfWeek dayOfWeek,
+            LocalTime startTime,
+            LocalTime endTime,
+            Set<Long> ignoreEntryIds
+    ) {
         return studentGroupScheduleEntryRepository.findByTeacherAssignmentTeacherUserEmailOrderByDayOfWeekAscStartTimeAsc(teacherEmail)
                 .stream()
                 .filter(entry -> !ignoreEntryIds.contains(entry.getId()))
-                .anyMatch(entry -> overlaps(entry.getDayOfWeek(), entry.getStartTime(), entry.getEndTime(), dayOfWeek, startTime, endTime));
+                .anyMatch(entry -> overlaps(
+                        entry.getDayOfWeek(),
+                        entry.getStartTime(),
+                        entry.getEndTime(),
+                        dayOfWeek,
+                        startTime,
+                        endTime
+                ) && !allowTeacherOverlap(requestedSessionType, entry.getSessionType()));
+    }
+
+    private boolean allowTeacherOverlap(ScheduleSessionType requestedSessionType, ScheduleSessionType existingSessionType) {
+        return requestedSessionType == ScheduleSessionType.SEMINAR && existingSessionType == ScheduleSessionType.SEMINAR;
     }
 
     private boolean hasGroupOverlap(Long groupId, DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime, Long ignoreEntryId) {
@@ -586,6 +626,8 @@ public class ScheduleService {
                 config.getLateValue(),
                 config.getMinimumAssignedGroupsForAutoSchedule(),
                 config.getLectureLengthMinutes(),
+                config.getSemesterWeeks(),
+                config.getMinimumAttendancePercentForFinalExam(),
                 config.getYear1StartTime().toString(),
                 config.getYear1EndTime().toString(),
                 config.getYear2StartTime().toString(),
@@ -612,9 +654,16 @@ public class ScheduleService {
                 assignment.getSubjectName(),
                 entry.getSessionType().name(),
                 entry.getDayOfWeek().name(),
+                nextSessionDate(entry.getDayOfWeek()),
                 entry.getStartTime().toString(),
                 entry.getEndTime().toString()
         );
+    }
+
+    private String nextSessionDate(DayOfWeek dayOfWeek) {
+        return LocalDate.now()
+                .with(TemporalAdjusters.nextOrSame(dayOfWeek))
+                .toString();
     }
 
     private record TimeSlot(DayOfWeek dayOfWeek, LocalTime startTime, LocalTime endTime) {

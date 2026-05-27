@@ -4,22 +4,36 @@ import com.springlms.backend.model.academicstructure.Faculty;
 import com.springlms.backend.model.academicstructure.Specialization;
 import com.springlms.backend.model.academicstructure.StudentGroup;
 import com.springlms.backend.model.academicstructure.StudentGroupTeacherAssignment;
+import com.springlms.backend.model.attendance.AttendanceRecord;
+import com.springlms.backend.model.attendance.AttendanceSession;
+import com.springlms.backend.model.attendance.AttendanceStatus;
+import com.springlms.backend.model.schedule.StudentGroupScheduleEntry;
 import com.springlms.backend.model.user.Role;
 import com.springlms.backend.model.user.State;
 import com.springlms.backend.model.user.StudentFundingType;
 import com.springlms.backend.model.user.StudentProfile;
 import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
+import com.springlms.backend.repository.AttendanceRecordRepository;
+import com.springlms.backend.repository.AttendanceSessionRepository;
 import com.springlms.backend.repository.FacultyRepository;
 import com.springlms.backend.repository.SpecializationRepository;
 import com.springlms.backend.repository.StudentGroupRepository;
+import com.springlms.backend.repository.StudentGroupScheduleEntryRepository;
 import com.springlms.backend.repository.UserRepository;
+import com.springlms.backend.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,15 +61,22 @@ public class DemoDataSeeder implements CommandLineRunner {
     private final FacultyRepository facultyRepository;
     private final SpecializationRepository specializationRepository;
     private final StudentGroupRepository studentGroupRepository;
+    private final StudentGroupScheduleEntryRepository studentGroupScheduleEntryRepository;
+    private final AttendanceSessionRepository attendanceSessionRepository;
+    private final AttendanceRecordRepository attendanceRecordRepository;
+    private final ScheduleService scheduleService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional
     public void run(String... args) {
         Faculty faculty = ensureFaculty();
         List<User> teachers = ensureTeachers(faculty);
         Specialization specialization = ensureSpecialization(faculty, teachers.getFirst());
         List<StudentGroup> studentGroups = ensureStudentGroups(specialization, teachers);
         ensureStudentsForGroups(studentGroups);
+        ensureDemoSchedules(studentGroups);
+        ensureDemoAttendance(studentGroups);
 
         System.out.println();
         System.out.println("==============================================");
@@ -64,6 +85,7 @@ public class DemoDataSeeder implements CommandLineRunner {
         System.out.println(" Teachers seeded: 5");
         System.out.println(" Groups seeded: 6525a1, 6525a2, 6525a3, 6525a4");
         System.out.println(" Students seeded: 20 per group");
+        System.out.println(" Attendance seeded: 2 weeks");
         System.out.println(" Example teacher: teacher.demo1@springlms.local / " + DEMO_PASSWORD);
         System.out.println(" Example student: student.6525a1.01@springlms.local / " + DEMO_PASSWORD);
         System.out.println("==============================================");
@@ -200,6 +222,86 @@ public class DemoDataSeeder implements CommandLineRunner {
                 ensureStudentForGroup(studentGroup, studentIndex);
             }
         }
+    }
+
+    private void ensureDemoSchedules(List<StudentGroup> studentGroups) {
+        for (StudentGroup studentGroup : studentGroups) {
+            scheduleService.generateStudentGroupSchedule(studentGroup.getId());
+        }
+    }
+
+    private void ensureDemoAttendance(List<StudentGroup> studentGroups) {
+        LocalDate anchorDate = LocalDate.now();
+
+        for (StudentGroup studentGroup : studentGroups) {
+            List<StudentGroupScheduleEntry> scheduleEntries = studentGroupScheduleEntryRepository.findByStudentGroupIdOrderByDayOfWeekAscStartTimeAsc(studentGroup.getId());
+
+            for (StudentGroupScheduleEntry scheduleEntry : scheduleEntries) {
+                List<LocalDate> sessionDates = recentOccurrences(scheduleEntry.getDayOfWeek(), 2, anchorDate);
+
+                for (int weekIndex = 0; weekIndex < sessionDates.size(); weekIndex++) {
+                    LocalDate sessionDate = sessionDates.get(weekIndex);
+                    AttendanceSession session = attendanceSessionRepository.findByScheduleEntryIdAndSessionDate(scheduleEntry.getId(), sessionDate)
+                            .orElseGet(() -> attendanceSessionRepository.save(AttendanceSession.builder()
+                                    .scheduleEntry(scheduleEntry)
+                                    .createdByTeacher(scheduleEntry.getTeacherAssignment().getTeacher())
+                                    .sessionDate(sessionDate)
+                                    .submitted(true)
+                                    .submittedAt(LocalDateTime.of(sessionDate, LocalTime.of(12, 0)))
+                                    .build()));
+
+                    seedAttendanceRecords(session, studentGroup, weekIndex);
+                }
+            }
+        }
+    }
+
+    private void seedAttendanceRecords(AttendanceSession session, StudentGroup studentGroup, int weekIndex) {
+        List<User> students = userRepository.findByStudentProfile_Group_IdOrderByStudentProfileFirstNameAscStudentProfileLastNameAsc(studentGroup.getId());
+
+        for (int studentIndex = 0; studentIndex < students.size(); studentIndex++) {
+            User student = students.get(studentIndex);
+            StudentProfile profile = student.getStudentProfile();
+
+            AttendanceRecord existing = attendanceRecordRepository.findBySessionIdAndStudentId(session.getId(), profile.getId())
+                    .orElse(null);
+            if (existing != null) {
+                continue;
+            }
+
+            AttendanceStatus status = seedStatusForStudent(studentIndex, weekIndex);
+            attendanceRecordRepository.save(AttendanceRecord.builder()
+                    .session(session)
+                    .student(profile)
+                    .status(status)
+                    .build());
+        }
+    }
+
+    private AttendanceStatus seedStatusForStudent(int studentIndex, int weekIndex) {
+        int pattern = (studentIndex + weekIndex) % 6;
+
+        if (pattern == 0) {
+            return AttendanceStatus.ABSENT;
+        }
+
+        if (pattern == 2 || pattern == 5) {
+            return AttendanceStatus.LATE;
+        }
+
+        return AttendanceStatus.PRESENT;
+    }
+
+    private List<LocalDate> recentOccurrences(DayOfWeek dayOfWeek, int count, LocalDate anchorDate) {
+        List<LocalDate> dates = new ArrayList<>();
+        LocalDate current = anchorDate.with(TemporalAdjusters.previousOrSame(dayOfWeek));
+
+        while (dates.size() < count) {
+            dates.add(current);
+            current = current.minusWeeks(1);
+        }
+
+        return dates;
     }
 
     private void ensureStudentForGroup(StudentGroup studentGroup, int studentIndex) {

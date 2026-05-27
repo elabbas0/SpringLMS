@@ -11,6 +11,7 @@ public record ScheduleEntryResponse(
         String subjectName,
         String sessionType,
         String dayOfWeek,
+        String nextSessionDate,
         String startTime,
         String endTime
 ) {

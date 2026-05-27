@@ -30,6 +30,12 @@ public class GlobalScheduleConfig {
     private Integer lectureLengthMinutes;
 
     @Column(nullable = false)
+    private Integer semesterWeeks;
+
+    @Column(nullable = false)
+    private Integer minimumAttendancePercentForFinalExam;
+
+    @Column(nullable = false)
     private LocalTime year1StartTime;
 
     @Column(nullable = false)

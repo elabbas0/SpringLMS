@@ -1,7 +1,6 @@
 package com.springlms.backend.model.attendance;
 
-import com.springlms.backend.model.course.CourseSection;
-import com.springlms.backend.model.schedule.Schedule;
+import com.springlms.backend.model.schedule.StudentGroupScheduleEntry;
 import com.springlms.backend.model.user.TeacherProfile;
 import jakarta.persistence.*;
 import lombok.*;
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
 @Table(
         name = "attendance_sessions",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"section_id", "schedule_id", "session_date"})
+                @UniqueConstraint(columnNames = {"schedule_entry_id", "session_date"})
         }
 )
 @Getter
@@ -28,12 +27,8 @@ public class AttendanceSession {
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "section_id", nullable = false)
-    private CourseSection section;
-
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_id", nullable = false)
-    private Schedule schedule;
+    @JoinColumn(name = "schedule_entry_id", nullable = false)
+    private StudentGroupScheduleEntry scheduleEntry;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_teacher_id", nullable = false)
@@ -45,6 +40,8 @@ public class AttendanceSession {
     @Builder.Default
     @Column(nullable = false)
     private Boolean submitted = false;
+
+    private LocalDateTime submittedAt;
 
     @Builder.Default
     @Column(nullable = false)

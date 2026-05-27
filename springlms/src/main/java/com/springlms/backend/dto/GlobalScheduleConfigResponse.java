@@ -5,6 +5,8 @@ public record GlobalScheduleConfigResponse(
         Double lateValue,
         Integer minimumAssignedGroupsForAutoSchedule,
         Integer lectureLengthMinutes,
+        Integer semesterWeeks,
+        Integer minimumAttendancePercentForFinalExam,
         String year1StartTime,
         String year1EndTime,
         String year2StartTime,
