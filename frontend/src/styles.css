@@ -123,10 +123,44 @@ button:disabled {
   gap: 24px;
 }
 
+.appLayout.authShell {
+  width: min(1180px, calc(100% - 32px));
+  grid-template-columns: 1fr;
+}
+
+.authPageShell {
+  width: 100%;
+}
+
 .sideNav {
   position: sticky;
   top: 24px;
   align-self: start;
+}
+
+.sideNavPanel {
+  border: 1px solid #2a2a2a;
+  background:
+    linear-gradient(180deg, rgba(31, 41, 55, 0.95), rgba(20, 20, 20, 0.98));
+  padding: 14px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.24);
+}
+
+.sideNavRole {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #9ca3af;
+}
+
+.sideNavPanel strong {
+  display: block;
+  color: #fff;
+  word-break: break-word;
 }
 
 .sideNavList {
@@ -136,26 +170,33 @@ button:disabled {
 
 .sideNavLink {
   display: block;
-  padding: 10px 12px;
-  border: 1px solid #2c2c2c;
-  border-radius: 6px;
+  padding: 11px 14px;
+  border: 1px solid #242424;
+  border-radius: 12px;
   text-decoration: none;
   color: #cfcfcf;
-  background: #141414;
+  background:
+    linear-gradient(180deg, rgba(24, 24, 24, 0.98), rgba(18, 18, 18, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, color 140ms ease;
 }
 
 .sideNavLink:hover {
-  background: #1a1a1a;
+  background: #191919;
+  transform: translateX(2px);
+  border-color: #313131;
 }
 
 .sideNavLink.active {
-  border-color: #555;
-  background: #1d1d1d;
+  border-color: rgba(96, 165, 250, 0.35);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(21, 24, 34, 0.98));
   color: #fff;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
 }
 
 .sideNavLink.child {
   margin-left: 16px;
+  font-size: 13px;
 }
 
 .pageShell {
@@ -167,13 +208,77 @@ button:disabled {
   margin: 0 auto;
 }
 
+.authLayout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 18px;
+  align-items: stretch;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.authIntroPanel {
+  border: 1px solid #2e2e2e;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(96, 165, 250, 0.16), transparent 45%),
+    linear-gradient(180deg, #171717 0%, #121212 100%);
+  padding: 28px;
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.authIntroPanel h1 {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.authIntroPanel p {
+  margin: 0;
+  color: #b9c2d0;
+  max-width: 28ch;
+}
+
 .authCard,
 .stepCard,
 .contentPanel {
   border: 1px solid #333;
   background: #151515;
-  padding: 20px;
-  border-radius: 6px;
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.authCard {
+  display: flex;
+  align-items: center;
+  min-height: 360px;
+}
+
+.authCard .formGrid {
+  width: 100%;
+}
+
+.authCard form {
+  width: 100%;
+}
+
+.authCard label,
+.authCard button,
+.authCard .errorBox,
+.authCard .mutedText {
+  width: 100%;
+}
+
+.authCard .errorBox {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.authFootnote {
+  margin-top: 4px;
 }
 
 .sectionHeader,
@@ -574,6 +679,13 @@ select:focus {
     #141414;
 }
 
+.studentAttendancePage {
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), transparent 33%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 30%),
+    #141414;
+}
+
 .studentScheduleHero {
   display: flex;
   justify-content: space-between;
@@ -626,6 +738,225 @@ select:focus {
 .studentScheduleStat strong {
   font-size: 28px;
   margin-top: 10px;
+}
+
+.studentAttendanceHero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: stretch;
+  border: 1px solid #2f2f2f;
+  background: linear-gradient(180deg, #181818 0%, #151515 100%);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.studentAttendanceHero h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+
+.studentAttendanceHero p {
+  margin: 0;
+  color: #a8a8a8;
+}
+
+.studentAttendanceStat {
+  min-width: 160px;
+  border: 1px solid #313131;
+  border-radius: 14px;
+  background: #171717;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.studentAttendanceStat span {
+  color: #a8a8a8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.studentAttendanceStat strong {
+  font-size: 28px;
+  margin-top: 10px;
+}
+
+.studentAttendanceStat small {
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+.attendanceMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lectureCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.lectureCardButton {
+  text-align: left;
+  border: 1px solid #2d2d2d;
+  background: linear-gradient(180deg, #181818 0%, #131313 100%);
+  color: #eee;
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.lectureCardButton:hover {
+  border-color: rgba(96, 165, 250, 0.35);
+  transform: translateY(-1px);
+}
+
+.lectureCardTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.lectureCardTop h3 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.lectureCardMeta,
+.lectureCardStats {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #b7c2d0;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.lectureCardStats span {
+  border: 1px solid #2b2b2b;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #171717;
+}
+
+.attendanceDetailView {
+  display: grid;
+  gap: 12px;
+}
+
+.attendanceTypeSections {
+  display: grid;
+  gap: 12px;
+}
+
+.attendanceTypeCard {
+  border: 1px solid #2a2a2a;
+  background: linear-gradient(180deg, #171717 0%, #141414 100%);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.attendanceTypeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.attendanceTypeHeader h4 {
+  margin: 4px 0 0;
+  font-size: 18px;
+}
+
+.attendanceBackButton {
+  width: fit-content;
+}
+
+.attendanceDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid #2a2a2a;
+  background: #171717;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.attendanceDetailHeader h3 {
+  margin: 4px 0 6px;
+}
+
+.attendanceDetailHeader p {
+  margin: 0;
+  color: #b7c2d0;
+}
+
+.attendanceLectureStats {
+  min-width: 160px;
+  border: 1px solid #303030;
+  border-radius: 14px;
+  background: #151515;
+  padding: 14px;
+}
+
+.attendanceLectureStats span {
+  display: block;
+  color: #9ca3af;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.attendanceLectureStats strong {
+  display: block;
+  font-size: 28px;
+  margin-top: 6px;
+}
+
+.attendanceLectureStats small {
+  display: block;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+.metricCard {
+  border: 1px solid #2d2d2d;
+  background: linear-gradient(180deg, #181818 0%, #151515 100%);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.metricCard span {
+  display: block;
+  color: #a8a8a8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.metricCard strong {
+  display: block;
+  font-size: 28px;
+}
+
+.metricCard small {
+  display: block;
+  color: #9ca3af;
+  margin-top: 6px;
 }
 
 .studentScheduleGrid {
@@ -683,6 +1014,348 @@ select:focus {
   margin-top: 8px;
   color: #8e8e8e;
   font-size: 12px;
+}
+
+.lessonDateRow {
+  margin-top: 8px;
+  color: #b7c2d0;
+  font-size: 12px;
+}
+
+.attendancePage {
+  background:
+    radial-gradient(circle at top left, rgba(14, 165, 233, 0.08), transparent 30%),
+    radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 28%),
+    #141414;
+}
+
+.attendanceIntro {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: stretch;
+  border: 1px solid #2f2f2f;
+  background: linear-gradient(180deg, #181818 0%, #151515 100%);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.attendanceIntro h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+
+.attendanceIntro p {
+  margin: 0;
+  color: #a8a8a8;
+}
+
+.attendanceNote {
+  min-width: 180px;
+  border: 1px solid #313131;
+  border-radius: 14px;
+  background: #171717;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.attendanceNote span {
+  color: #a8a8a8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.attendanceNote strong {
+  font-size: 24px;
+  margin-top: 10px;
+}
+
+.attendanceGroupList {
+  display: grid;
+  gap: 14px;
+}
+
+.attendanceGroupCard {
+  border: 1px solid #2c2c2c;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #171717 0%, #131313 100%);
+  padding: 16px;
+}
+
+.attendanceLessonList {
+  display: grid;
+  gap: 10px;
+}
+
+.attendanceLessonRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #2a2a2a;
+  background: #181818;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.attendanceLessonInfo {
+  display: grid;
+  gap: 4px;
+}
+
+.attendanceLessonInfo strong {
+  font-size: 15px;
+}
+
+.attendanceModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.68);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.attendanceModal {
+  width: min(900px, 100%);
+  max-height: min(88vh, 900px);
+  overflow: auto;
+  border: 1px solid #2f2f2f;
+  background: #151515;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
+}
+
+.attendanceModalHeader,
+.attendanceModalFooter {
+  margin-bottom: 14px;
+}
+
+.attendanceModalHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.attendanceStatusBox {
+  border: 1px solid #303030;
+  border-radius: 14px;
+  background: #171717;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.attendanceStatusBox span {
+  color: #a8a8a8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.attendanceStatusBox strong {
+  font-size: 22px;
+  margin-top: 8px;
+}
+
+.attendanceStatusBox small {
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+.attendanceLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.attendanceLegendItem {
+  font-weight: 600;
+}
+
+.status-present {
+  background: rgba(34, 197, 94, 0.14);
+  color: #bbf7d0;
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.status-late {
+  background: rgba(251, 191, 36, 0.14);
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.24);
+}
+
+.status-excused {
+  background: rgba(96, 165, 250, 0.14);
+  color: #bfdbfe;
+  border-color: rgba(96, 165, 250, 0.24);
+}
+
+.status-absent {
+  background: #d12626;
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.24);
+}
+
+.attendanceStudentList {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.attendanceStudentRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #2b2b2b;
+  background: #181818;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.attendanceToggleGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.attendanceSwitch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  cursor: pointer;
+}
+
+.attendanceSwitch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.attendanceSwitchTrack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 144px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid #3a3a3a;
+  background: #202020;
+  padding: 3px;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.attendanceSwitchThumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  height: calc(100% - 6px);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2f6fed 0%, #2460d1 100%);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.attendanceSwitchLabel {
+  position: relative;
+  z-index: 1;
+  width: 50%;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #d6d6d6;
+  transition: color 160ms ease;
+}
+
+.attendanceSwitchLabelLeft {
+  padding-left: 4px;
+}
+
+.attendanceSwitchLabelRight {
+  padding-right: 4px;
+}
+
+.attendanceSwitch input:not(:checked) + .attendanceSwitchTrack .attendanceSwitchThumb {
+  transform: translateX(0);
+  background: linear-gradient(180deg, #3b3b3b 0%, #2b2b2b 100%);
+}
+
+.attendanceSwitch input:checked + .attendanceSwitchTrack .attendanceSwitchThumb {
+  transform: translateX(100%);
+}
+
+.attendanceSwitch input:not(:checked) + .attendanceSwitchTrack .attendanceSwitchLabelLeft {
+  color: #fff;
+}
+
+.attendanceSwitch input:checked + .attendanceSwitchTrack .attendanceSwitchLabelRight {
+  color: #fff;
+}
+
+.attendanceSwitch input:disabled + .attendanceSwitchTrack {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.attendanceLateToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #3a3a3a;
+  background: #202020;
+  color: #d6d6d6;
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.attendanceLateToggle input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: #60a5fa;
+}
+
+.attendanceLateToggle:has(input:checked) {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.14);
+  color: #fde68a;
+}
+
+.attendanceLateToggle:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.attendanceToggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.attendanceModalActions {
+  margin-bottom: 16px;
+}
+
+.attendanceModalMeta {
+  margin-bottom: 12px;
 }
 
 .sessionPill {
@@ -792,8 +1465,25 @@ select:focus {
 
   .studentScheduleHero,
   .lessonTopRow,
-  .lessonMetaRow {
+  .lessonMetaRow,
+  .attendanceIntro,
+  .studentAttendanceHero,
+  .attendanceLessonRow,
+  .attendanceStudentRow,
+  .attendanceModalHeader {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .authLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .attendanceMetrics {
+    grid-template-columns: 1fr;
+  }
+
+  .attendanceToggleGroup {
+    justify-content: flex-start;
   }
 }

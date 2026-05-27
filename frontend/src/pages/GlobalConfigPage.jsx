@@ -7,6 +7,8 @@ const initialForm = {
   lateValue: "0.5",
   minimumAssignedGroupsForAutoSchedule: "2",
   lectureLengthMinutes: "80",
+  semesterWeeks: "15",
+  minimumAttendancePercentForFinalExam: "70",
   year1StartTime: "09:00",
   year1EndTime: "13:20",
   year2StartTime: "09:00",
@@ -40,6 +42,10 @@ export default function GlobalConfigPage() {
           lateValue: String(config.lateValue ?? "0.5"),
           minimumAssignedGroupsForAutoSchedule: String(config.minimumAssignedGroupsForAutoSchedule ?? "2"),
           lectureLengthMinutes: String(config.lectureLengthMinutes ?? "80"),
+          semesterWeeks: String(config.semesterWeeks ?? "15"),
+          minimumAttendancePercentForFinalExam: String(
+            config.minimumAttendancePercentForFinalExam ?? "70"
+          ),
           year1StartTime: (config.year1StartTime || "09:00").slice(0, 5),
           year1EndTime: (config.year1EndTime || "13:20").slice(0, 5),
           year2StartTime: (config.year2StartTime || "09:00").slice(0, 5),
@@ -76,7 +82,9 @@ export default function GlobalConfigPage() {
         absenceValue: Number(form.absenceValue),
         lateValue: Number(form.lateValue),
         minimumAssignedGroupsForAutoSchedule: Number(form.minimumAssignedGroupsForAutoSchedule),
-        lectureLengthMinutes: Number(form.lectureLengthMinutes)
+        lectureLengthMinutes: Number(form.lectureLengthMinutes),
+        semesterWeeks: Number(form.semesterWeeks),
+        minimumAttendancePercentForFinalExam: Number(form.minimumAttendancePercentForFinalExam)
       };
 
       const saved = await updateGlobalConfig(payload);
@@ -85,6 +93,8 @@ export default function GlobalConfigPage() {
         lateValue: String(saved.lateValue),
         minimumAssignedGroupsForAutoSchedule: String(saved.minimumAssignedGroupsForAutoSchedule),
         lectureLengthMinutes: String(saved.lectureLengthMinutes),
+        semesterWeeks: String(saved.semesterWeeks),
+        minimumAttendancePercentForFinalExam: String(saved.minimumAttendancePercentForFinalExam),
         year1StartTime: saved.year1StartTime.slice(0, 5),
         year1EndTime: saved.year1EndTime.slice(0, 5),
         year2StartTime: saved.year2StartTime.slice(0, 5),
@@ -167,6 +177,29 @@ export default function GlobalConfigPage() {
               min="30"
               value={form.lectureLengthMinutes}
               onChange={(event) => updateField("lectureLengthMinutes", event.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="twoColumn">
+          <label>
+            Semester Weeks
+            <input
+              type="number"
+              min="1"
+              value={form.semesterWeeks}
+              onChange={(event) => updateField("semesterWeeks", event.target.value)}
+            />
+          </label>
+
+          <label>
+            Minimum Attendance % For Final Exam
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={form.minimumAttendancePercentForFinalExam}
+              onChange={(event) => updateField("minimumAttendancePercentForFinalExam", event.target.value)}
             />
           </label>
         </div>

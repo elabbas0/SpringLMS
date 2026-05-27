@@ -11,6 +11,7 @@ const navByRole = {
   TEACHER: [
     { to: "/teacher/dashboard", label: "Dashboard" },
     { to: "/teacher/schedule", label: "Schedule" },
+    { to: "/teacher/attendance", label: "Attendance" },
     { to: "/teacher/groups", label: "Groups" },
     { to: "/teacher/students", label: "Students" },
     { to: "/teacher/standing", label: "Standing" }
@@ -35,6 +36,11 @@ export default function SideNav() {
 
   return (
     <aside className="sideNav">
+      <div className="sideNavPanel">
+        <span className="sideNavRole">{user.role}</span>
+        <strong>{user.email}</strong>
+      </div>
+
       <nav className="sideNavList">
         {items.map((item) => (
           <NavLink

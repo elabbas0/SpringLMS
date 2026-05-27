@@ -409,6 +409,7 @@ export default function ManageStudentGroupsPage() {
                           <th>Subject</th>
                           <th>Type</th>
                           <th>Teacher</th>
+                          <th>Date</th>
                           <th>Day</th>
                           <th>Time</th>
                         </tr>
@@ -419,6 +420,7 @@ export default function ManageStudentGroupsPage() {
                             <td>{entry.subjectName}</td>
                             <td>{entry.sessionType}</td>
                             <td>{entry.teacherName}</td>
+                            <td>{entry.nextSessionDate}</td>
                             <td>{entry.dayOfWeek}</td>
                             <td>{entry.startTime.slice(0, 5)} - {entry.endTime.slice(0, 5)}</td>
                           </tr>

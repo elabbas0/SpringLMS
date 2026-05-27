@@ -81,6 +81,7 @@ export default function TeacherSchedulePage() {
               <th>Group</th>
               <th>Subject</th>
               <th>Type</th>
+              <th>Date</th>
               <th>Day</th>
               <th>Start</th>
               <th>End</th>
@@ -90,7 +91,7 @@ export default function TeacherSchedulePage() {
           <tbody>
             {!loading && schedule.length === 0 && (
               <tr>
-                <td colSpan="7">No schedule yet.</td>
+                <td colSpan="8">No schedule yet.</td>
               </tr>
             )}
 
@@ -105,6 +106,7 @@ export default function TeacherSchedulePage() {
                   <td>{entry.studentGroupName}</td>
                   <td>{entry.subjectName}</td>
                   <td>{entry.sessionType}</td>
+                  <td>{entry.nextSessionDate}</td>
                   <td>
                     {editingId === entry.id ? (
                       <select

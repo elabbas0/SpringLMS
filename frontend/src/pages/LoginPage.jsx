@@ -48,12 +48,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="centeredPage">
-      <section className="authCard fadeIn">
-        <div className="sectionHeader">
-          <h1>Login to SpringLMS</h1>
-        </div>
+    <div className="authLayout fadeIn">
+      <aside className="authIntroPanel">
+        <span className="eyebrow">SpringLMS</span>
+        <h1>Login</h1>
+        <p>Azerbaijani university workflow for admins, teachers, and students.</p>
+      </aside>
 
+      <section className="authCard">
         <form onSubmit={handleSubmit} className="formGrid">
           <label>
             Email
@@ -63,7 +65,7 @@ export default function LoginPage() {
               value={form.email}
               onChange={updateField}
               required
-              placeholder="admin@example.com"
+              placeholder="teacher.demo1@springlms.local"
             />
           </label>
 
@@ -75,7 +77,7 @@ export default function LoginPage() {
               value={form.password}
               onChange={updateField}
               required
-              placeholder="password123"
+              placeholder="Demo1234"
             />
           </label>
 
@@ -84,11 +86,11 @@ export default function LoginPage() {
           <button disabled={loading} className="primaryButton">
             {loading ? "Logging in..." : "Login"}
           </button>
-        </form>
 
-        <p className="mutedText">
-          No account? <Link to="/register/student">Submit registration</Link>
-        </p>
+          <p className="mutedText authFootnote">
+            No account? <Link to="/register/student">Submit registration</Link>
+          </p>
+        </form>
       </section>
     </div>
   );

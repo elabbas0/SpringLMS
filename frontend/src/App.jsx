@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import SideNav from "./components/SideNav.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute.jsx";
@@ -12,9 +12,11 @@ import CreateSpecializationPage from "./pages/CreateSpecializationPage.jsx";
 import CreateTeacherPage from "./pages/CreateTeacherPage.jsx";
 import StudentDashboardPage from "./pages/StudentDashboardPage.jsx";
 import StudentSchedulePage from "./pages/StudentSchedulePage.jsx";
+import StudentAttendancePage from "./pages/StudentAttendancePage.jsx";
 import StudentPendingPage from "./pages/StudentPendingPage.jsx";
 import TeacherDashboardPage from "./pages/TeacherDashboardPage.jsx";
 import TeacherSchedulePage from "./pages/TeacherSchedulePage.jsx";
+import TeacherAttendancePage from "./pages/TeacherAttendancePage.jsx";
 import ManageStudentGroupsPage from "./pages/ManageStudentGroupsPage.jsx";
 import GlobalConfigPage from "./pages/GlobalConfigPage.jsx";
 import ForbiddenPage from "./pages/ForbiddenPage.jsx";
@@ -41,13 +43,16 @@ function HomeRedirect() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const authRoute = location.pathname === "/login" || location.pathname === "/register/student";
+
   return (
     <>
       <Navbar />
 
-      <main className="appLayout">
-        <SideNav />
-        <div className="pageShell">
+      <main className={authRoute ? "appLayout authShell" : "appLayout"}>
+        {!authRoute && <SideNav />}
+        <div className={authRoute ? "pageShell authPageShell" : "pageShell"}>
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
           <Route path="/login" element={<LoginPage />} />
@@ -71,12 +76,13 @@ export default function App() {
             <Route path="/student/pending" element={<StudentPendingPage />} />
             <Route path="/student/schedule" element={<StudentSchedulePage />} />
             <Route path="/student/tasks" element={<PlaceholderPage eyebrow="Student" title="Tasks" />} />
-            <Route path="/student/attendance" element={<PlaceholderPage eyebrow="Student" title="Attendance" />} />
+            <Route path="/student/attendance" element={<StudentAttendancePage />} />
           </Route>
 
           <Route element={<ProtectedRoute requiredRole="TEACHER" />}>
             <Route path="/teacher/dashboard" element={<PlaceholderPage eyebrow="Teacher" title="Dashboard" />} />
             <Route path="/teacher/schedule" element={<TeacherSchedulePage />} />
+            <Route path="/teacher/attendance" element={<TeacherAttendancePage />} />
             <Route path="/teacher/groups" element={<TeacherDashboardPage />} />
             <Route path="/teacher/students" element={<PlaceholderPage eyebrow="Teacher" title="Students" />} />
             <Route path="/teacher/standing" element={<PlaceholderPage eyebrow="Teacher" title="Standing" />} />

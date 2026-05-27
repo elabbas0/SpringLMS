@@ -6,3 +6,17 @@ export function listStudentSchedule() {
     headers: authHeaders()
   });
 }
+
+export function getStudentAttendanceSummary() {
+  return jsonRequest("/api/student/attendance/summary", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}
+
+export function listStudentAttendanceEntries() {
+  return jsonRequest("/api/student/attendance/entries", {
+    method: "GET",
+    headers: authHeaders()
+  });
+}

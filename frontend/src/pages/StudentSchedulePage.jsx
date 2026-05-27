@@ -99,6 +99,7 @@ export default function StudentSchedulePage() {
                     <span>{entry.teacherName}</span>
                   </div>
 
+                  <div className="lessonDateRow">{entry.nextSessionDate} · {dayLabels[entry.dayOfWeek]}</div>
                   <div className="lessonGroupMeta">{entry.studentGroupName}</div>
                 </div>
               ))}
