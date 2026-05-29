@@ -10,7 +10,7 @@ import com.springlms.backend.model.user.StudentProfile;
 import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
 import com.springlms.backend.repository.*;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

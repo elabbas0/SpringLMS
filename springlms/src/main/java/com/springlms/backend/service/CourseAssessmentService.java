@@ -10,7 +10,7 @@ import com.springlms.backend.model.user.StudentProfile;
 import com.springlms.backend.model.user.TeacherProfile;
 import com.springlms.backend.model.user.User;
 import com.springlms.backend.repository.*;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -35,6 +34,7 @@ public class CourseAssessmentService {
     private final CourseAssignmentSubmissionRepository courseAssignmentSubmissionRepository;
     private final CourseAttachmentRepository courseAttachmentRepository;
     private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
 
     public List<CourseAssignmentResponse> listTeacherAssignments(String teacherEmail) {
         return courseAssignmentRepository.findBySectionTeacherAssignmentsTeacherUserEmailOrderByDueDateAscCreatedAtDesc(teacherEmail)
@@ -127,13 +127,14 @@ public class CourseAssessmentService {
         submission.setSubmittedAt(LocalDateTime.now());
 
         if (file != null && !file.isEmpty()) {
-            try {
-                submission.setFileName(file.getOriginalFilename());
-                submission.setFileContentType(file.getContentType());
-                submission.setFileData(file.getBytes());
-            } catch (IOException ex) {
-                throw new BadRequestException("Unable to read uploaded file.");
+            // delete previous file if re-submitting
+            if (submission.getStoragePath() != null) {
+                fileStorageService.delete(submission.getStoragePath());
             }
+            String key = fileStorageService.store(file);
+            submission.setFileName(file.getOriginalFilename());
+            submission.setFileContentType(file.getContentType());
+            submission.setStoragePath(key);
         }
 
         return toSubmissionResponse(courseAssignmentSubmissionRepository.save(submission));
@@ -180,23 +181,20 @@ public class CourseAssessmentService {
         CourseSection section = resolveTeacherSection(teacherEmail, sectionId);
         AttachmentType attachmentType = parseAttachmentType(attachmentTypeValue, file.getContentType());
 
-        CourseAttachment attachment;
-        try {
-            attachment = courseAttachmentRepository.save(CourseAttachment.builder()
-                    .section(section)
-                    .teacher(teacher)
-                    .attachmentType(attachmentType)
-                    .title(requireText(title, "Title"))
-                    .description(trimToNull(description))
-                    .resourceUrl("file://" + file.getOriginalFilename())
-                    .fileName(file.getOriginalFilename())
-                    .fileContentType(file.getContentType())
-                    .fileData(file.getBytes())
-                    .archived(false)
-                    .build());
-        } catch (IOException ex) {
-            throw new BadRequestException("Unable to read uploaded file.");
-        }
+        String key = fileStorageService.store(file);
+
+        CourseAttachment attachment = courseAttachmentRepository.save(CourseAttachment.builder()
+                .section(section)
+                .teacher(teacher)
+                .attachmentType(attachmentType)
+                .title(requireText(title, "Title"))
+                .description(trimToNull(description))
+                .resourceUrl("file://" + file.getOriginalFilename())
+                .fileName(file.getOriginalFilename())
+                .fileContentType(file.getContentType())
+                .storagePath(key)
+                .archived(false)
+                .build());
 
         return new UploadCourseAttachmentResponse(
                 attachment.getId(),
@@ -226,16 +224,51 @@ public class CourseAssessmentService {
             throw new ForbiddenException("You do not have access to this attachment.");
         }
 
-        if (attachment.getFileData() == null || attachment.getFileData().length == 0) {
+        if (attachment.getStoragePath() == null || attachment.getStoragePath().isBlank()) {
             throw new BadRequestException("Attachment does not have a downloadable file.");
         }
 
-        ByteArrayResource resource = new ByteArrayResource(attachment.getFileData());
+        byte[] data = fileStorageService.load(attachment.getStoragePath());
+        ByteArrayResource resource = new ByteArrayResource(data);
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(
                         attachment.getFileContentType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : attachment.getFileContentType()
                 ))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + safeFileName(attachment.getFileName()) + "\"")
+                .body(resource);
+    }
+
+    public ResponseEntity<Resource> downloadSubmissionFile(String email, Long submissionId) {
+        CourseAssignmentSubmission submission = courseAssignmentSubmissionRepository.findById(submissionId)
+                .orElseThrow(() -> new NotFoundException("Submission not found."));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found."));
+
+        boolean allowed = switch (user.getRole()) {
+            case ADMIN -> true;
+            case TEACHER -> submission.getAssignment().getSection().getTeacherAssignments()
+                    .stream()
+                    .anyMatch(a -> a.getTeacher().getUser().getEmail().equals(email));
+            case STUDENT -> submission.getStudent().getUser().getEmail().equals(email);
+        };
+        if (!allowed) {
+            throw new ForbiddenException("You do not have access to this submission file.");
+        }
+
+        if (submission.getStoragePath() == null || submission.getStoragePath().isBlank()) {
+            throw new BadRequestException("Submission does not have a downloadable file.");
+        }
+
+        byte[] data = fileStorageService.load(submission.getStoragePath());
+        ByteArrayResource resource = new ByteArrayResource(data);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        submission.getFileContentType() == null ? MediaType.APPLICATION_OCTET_STREAM_VALUE : submission.getFileContentType()
+                ))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + safeFileName(submission.getFileName()) + "\"")
                 .body(resource);
     }
 

@@ -46,9 +46,8 @@ public class CourseAttachment {
     @Column(length = 100)
     private String fileContentType;
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    private byte[] fileData;
+    @Column(length = 500)
+    private String storagePath;
 
     @Builder.Default
     @Column(nullable = false)

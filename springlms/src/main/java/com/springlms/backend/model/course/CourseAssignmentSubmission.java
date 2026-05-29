@@ -42,9 +42,8 @@ public class CourseAssignmentSubmission {
     @Column(length = 100)
     private String fileContentType;
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    private byte[] fileData;
+    @Column(length = 500)
+    private String storagePath;
 
     @Column(length = 1000)
     private String linkUrl;
